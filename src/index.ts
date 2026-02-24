@@ -15,6 +15,7 @@ import { registerDocsCommand } from "./commands/docs.js";
 import { registerSendCommand } from "./commands/send.js";
 import { registerMultisendCommand } from "./commands/multisend.js";
 import { registerDeployCommand } from "./commands/deploy.js";
+import { registerMessageCommand } from "./commands/message.js";
 
 export function createProgram(): Command {
   const program = new Command();
@@ -30,6 +31,7 @@ export function createProgram(): Command {
   registerSendCommand(program);
   registerMultisendCommand(program);
   registerDeployCommand(program);
+  registerMessageCommand(program);
   registerTransferCommand(program);
   registerBridgeCommand(program);
   registerGatewayCommand(program);
