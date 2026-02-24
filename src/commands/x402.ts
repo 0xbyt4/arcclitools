@@ -1,18 +1,20 @@
 import { Command } from "commander";
 import { log, table, spinner } from "../utils/logger.js";
-import { promptText, promptAddress, promptConfirm } from "../utils/prompts.js";
+import { promptAddress } from "../utils/prompts.js";
 import { validateUrl, requireValidAddress } from "../utils/validator.js";
 import { payForResource, testEndpoint } from "../services/x402-client.js";
-import { createX402Server, generateServerTemplate, generateRoutesTemplate } from "../services/x402-server.js";
+import {
+  createX402Server,
+  generateServerTemplate,
+  generateRoutesTemplate,
+} from "../services/x402-server.js";
 import { getX402Port, getX402Price } from "../config/env.js";
 import type { X402RouteConfig } from "../types/index.js";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 
 export function registerX402Command(program: Command): void {
-  const x402 = program
-    .command("x402")
-    .description("x402 HTTP payment protocol");
+  const x402 = program.command("x402").description("x402 HTTP payment protocol");
 
   x402
     .command("server")
@@ -24,7 +26,7 @@ export function registerX402Command(program: Command): void {
     .action(async (opts) => {
       const port = opts.port ? Number(opts.port) : getX402Port();
       const price = opts.price || getX402Price();
-      const payTo = opts.payTo || await promptAddress("Payment recipient address:");
+      const payTo = opts.payTo || (await promptAddress("Payment recipient address:"));
 
       requireValidAddress(payTo, "payment recipient");
 
@@ -54,7 +56,7 @@ export function registerX402Command(program: Command): void {
           log.title("Protected Routes");
           table(
             ["Path", "Price", "Description"],
-            routes.map((r) => [r.path, `$${r.price}`, r.description || ""]),
+            routes.map((r) => [r.path, `$${r.price}`, r.description || ""])
           );
         } else {
           log.info(`Protected endpoint: http://localhost:${port}/protected`);
@@ -89,7 +91,7 @@ export function registerX402Command(program: Command): void {
             ["URL", url],
             ["Status", String(response.status)],
             ["Content-Type", response.headers.get("content-type") || "N/A"],
-          ],
+          ]
         );
 
         log.newline();
@@ -129,7 +131,7 @@ export function registerX402Command(program: Command): void {
             ["HTTP Status", String(result.status)],
             ["Requires Payment", result.requiresPayment ? "Yes (402)" : "No"],
             ...(result.price ? [["Price", `$${result.price} USDC`]] : []),
-          ],
+          ]
         );
 
         if (result.requiresPayment) {
@@ -148,7 +150,7 @@ export function registerX402Command(program: Command): void {
     .description("Initialize x402 config and templates in current directory")
     .option("--pay-to <address>", "Payment recipient address")
     .action(async (opts) => {
-      const payTo = opts.payTo || await promptAddress("Payment recipient address:");
+      const payTo = opts.payTo || (await promptAddress("Payment recipient address:"));
       requireValidAddress(payTo, "payment recipient");
 
       const cwd = process.cwd();

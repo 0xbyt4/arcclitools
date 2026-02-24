@@ -206,11 +206,13 @@ export async function sendERC20(params: {
   const account = wallet.account!;
   const client = getPublicClient();
 
-  const decimals = params.decimals ?? await client.readContract({
-    address: params.tokenAddress,
-    abi: erc20Abi,
-    functionName: "decimals",
-  });
+  const decimals =
+    params.decimals ??
+    (await client.readContract({
+      address: params.tokenAddress,
+      abi: erc20Abi,
+      functionName: "decimals",
+    }));
 
   const value = parseUnits(params.amount, decimals);
 
@@ -309,7 +311,9 @@ export async function approveERC20(params: {
   return hash;
 }
 
-export async function getTokenInfo(tokenAddress: `0x${string}`): Promise<{ symbol: string; decimals: number }> {
+export async function getTokenInfo(
+  tokenAddress: `0x${string}`
+): Promise<{ symbol: string; decimals: number }> {
   const client = getPublicClient();
 
   const [symbol, decimals] = await Promise.all([

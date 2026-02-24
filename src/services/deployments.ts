@@ -33,9 +33,7 @@ export function saveDeployment(deployment: Deployment): void {
 
 export function updateDeployment(address: string, updates: Partial<Deployment>): boolean {
   const deployments = loadDeployments();
-  const index = deployments.findIndex(
-    (d) => d.address.toLowerCase() === address.toLowerCase()
-  );
+  const index = deployments.findIndex((d) => d.address.toLowerCase() === address.toLowerCase());
 
   if (index === -1) return false;
 
@@ -46,7 +44,5 @@ export function updateDeployment(address: string, updates: Partial<Deployment>):
 
 export function getDeployment(address: string): Deployment | undefined {
   const deployments = loadDeployments();
-  return deployments.find(
-    (d) => d.address.toLowerCase() === address.toLowerCase()
-  );
+  return deployments.find((d) => d.address.toLowerCase() === address.toLowerCase());
 }

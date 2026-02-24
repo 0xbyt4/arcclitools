@@ -25,7 +25,7 @@ export async function promptSecret(message: string): Promise<string> {
 
 export async function promptSelect<T extends string>(
   message: string,
-  choices: { name: string; value: T; description?: string }[],
+  choices: { name: string; value: T; description?: string }[]
 ): Promise<T> {
   return select({ message, choices });
 }
@@ -48,8 +48,6 @@ export async function promptToken(): Promise<string> {
 export async function promptNetwork(): Promise<string> {
   return select({
     message: "Select network:",
-    choices: [
-      { name: "Arc Testnet", value: "testnet", description: "Chain ID: 5042002" },
-    ],
+    choices: [{ name: "Arc Testnet", value: "testnet", description: "Chain ID: 5042002" }],
   });
 }

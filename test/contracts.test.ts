@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, existsSync } from "fs";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+import { resolve } from "path";
 
 const contractsDir = resolve(process.cwd(), "src/contracts");
 
@@ -34,7 +33,9 @@ describe("SimpleToken contract", () => {
 
   it("abi has ERC-20 functions", () => {
     const artifact = JSON.parse(readFileSync(resolve(contractsDir, "SimpleToken.json"), "utf-8"));
-    const functions = artifact.abi.filter((x: any) => x.type === "function").map((x: any) => x.name);
+    const functions = artifact.abi
+      .filter((x: any) => x.type === "function")
+      .map((x: any) => x.name);
     expect(functions).toContain("name");
     expect(functions).toContain("symbol");
     expect(functions).toContain("decimals");
@@ -84,7 +85,9 @@ describe("SimpleNFT contract", () => {
 
   it("abi has ERC-721 functions", () => {
     const artifact = JSON.parse(readFileSync(resolve(contractsDir, "SimpleNFT.json"), "utf-8"));
-    const functions = artifact.abi.filter((x: any) => x.type === "function").map((x: any) => x.name);
+    const functions = artifact.abi
+      .filter((x: any) => x.type === "function")
+      .map((x: any) => x.name);
     expect(functions).toContain("name");
     expect(functions).toContain("symbol");
     expect(functions).toContain("ownerOf");
@@ -122,7 +125,9 @@ describe("SimpleDEX contract", () => {
 
   it("abi has AMM functions", () => {
     const artifact = JSON.parse(readFileSync(resolve(contractsDir, "SimpleDEX.json"), "utf-8"));
-    const functions = artifact.abi.filter((x: any) => x.type === "function").map((x: any) => x.name);
+    const functions = artifact.abi
+      .filter((x: any) => x.type === "function")
+      .map((x: any) => x.name);
     expect(functions).toContain("createPool");
     expect(functions).toContain("addLiquidity");
     expect(functions).toContain("removeLiquidity");

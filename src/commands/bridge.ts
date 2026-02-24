@@ -1,7 +1,12 @@
 import { Command } from "commander";
 import { log, table, spinner } from "../utils/logger.js";
 import { validateAddress, validateAmount } from "../utils/validator.js";
-import { bridgeToArc, bridgeFromArc, getSupportedChains, type BridgeChain } from "../services/bridge.js";
+import {
+  bridgeToArc,
+  bridgeFromArc,
+  getSupportedChains,
+  type BridgeChain,
+} from "../services/bridge.js";
 import { ARC_TESTNET } from "../config/constants.js";
 
 const SUPPORTED = getSupportedChains().filter((c) => c !== "Arc_Testnet");
@@ -10,13 +15,16 @@ export function registerBridgeCommand(program: Command): void {
   const bridge = program
     .command("bridge")
     .description("Bridge USDC to/from Arc via CCTP")
-    .addHelpText("after", `
+    .addHelpText(
+      "after",
+      `
 Requires Circle API credentials:
   arc config set api-key <your-key>
   arc config set entity-secret <your-secret>
 
 Supported chains: ${SUPPORTED.map((c) => c.replace(/_/g, " ")).join(", ")}
-`);
+`
+    );
 
   bridge
     .command("to-arc")
@@ -25,11 +33,14 @@ Supported chains: ${SUPPORTED.map((c) => c.replace(/_/g, " ")).join(", ")}
     .option("-f, --from <address>", "Source wallet address")
     .option("-t, --to <address>", "Destination address on Arc")
     .option("-a, --amount <amount>", "Amount of USDC to bridge")
-    .addHelpText("after", `
+    .addHelpText(
+      "after",
+      `
 Examples:
   $ arc bridge to-arc -c Ethereum_Sepolia -f 0xSrc... -t 0xDst... -a 10
   $ arc bridge to-arc -c Base_Sepolia -f 0xSrc... -t 0xDst... -a 100
-`)
+`
+    )
     .action(async (opts: { chain?: string; from?: string; to?: string; amount?: string }) => {
       if (!opts.chain || !SUPPORTED.includes(opts.chain as BridgeChain)) {
         log.error(`Invalid or missing chain. Use -c <chain>`);
@@ -83,7 +94,7 @@ Examples:
               ["Amount", `${opts.amount} USDC`],
               ...(data.txHash ? [["Tx Hash", String(data.txHash)]] : []),
               ...(data.status ? [["Status", String(data.status)]] : []),
-            ],
+            ]
           );
         }
 
@@ -104,11 +115,14 @@ Examples:
     .option("-f, --from <address>", "Source wallet address on Arc")
     .option("-t, --to <address>", "Destination address")
     .option("-a, --amount <amount>", "Amount of USDC to bridge")
-    .addHelpText("after", `
+    .addHelpText(
+      "after",
+      `
 Examples:
   $ arc bridge from-arc -c Ethereum_Sepolia -f 0xSrc... -t 0xDst... -a 10
   $ arc bridge from-arc -c Base_Sepolia -f 0xSrc... -t 0xDst... -a 50
-`)
+`
+    )
     .action(async (opts: { chain?: string; from?: string; to?: string; amount?: string }) => {
       if (!opts.chain || !SUPPORTED.includes(opts.chain as BridgeChain)) {
         log.error(`Invalid or missing chain. Use -c <chain>`);
@@ -162,7 +176,7 @@ Examples:
               ["Amount", `${opts.amount} USDC`],
               ...(data.txHash ? [["Tx Hash", String(data.txHash)]] : []),
               ...(data.status ? [["Status", String(data.status)]] : []),
-            ],
+            ]
           );
         }
 

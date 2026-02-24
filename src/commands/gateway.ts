@@ -7,24 +7,29 @@ export function registerGatewayCommand(program: Command): void {
   const gw = program
     .command("gateway")
     .description("Circle Gateway - unified crosschain USDC balance")
-    .addHelpText("after", `
+    .addHelpText(
+      "after",
+      `
 Requires Circle API credentials:
   arc config set api-key <your-key>
   arc config set entity-secret <your-secret>
 
 Gateway provides a unified USDC balance across multiple chains.
 Learn more: https://developers.circle.com/circle-mint/docs/gateway
-`);
+`
+    );
 
-  gw
-    .command("deposit")
+  gw.command("deposit")
     .description("Deposit USDC into Gateway unified balance")
     .option("-w, --wallet-id <id>", "Circle wallet ID")
     .option("-a, --amount <amount>", "Amount to deposit")
-    .addHelpText("after", `
+    .addHelpText(
+      "after",
+      `
 Example:
   $ arc gateway deposit -w wallet123 -a 100
-`)
+`
+    )
     .action(async (opts: { walletId?: string; amount?: string }) => {
       if (!opts.walletId) {
         log.error("Wallet ID required. Use -w <wallet-id>");
@@ -59,7 +64,7 @@ Example:
               ["Transaction ID", String(data.id || "")],
               ["State", String(data.state || "")],
               ["Amount", `${opts.amount} USDC`],
-            ],
+            ]
           );
         }
       } catch (err) {
@@ -69,17 +74,19 @@ Example:
       }
     });
 
-  gw
-    .command("transfer")
+  gw.command("transfer")
     .description("Transfer USDC via Gateway to another chain")
     .option("-w, --wallet-id <id>", "Circle wallet ID")
     .option("-t, --to <address>", "Destination address")
     .option("-c, --chain <blockchain>", "Destination blockchain (e.g., ETH-SEPOLIA, BASE-SEPOLIA)")
     .option("-a, --amount <amount>", "Amount to transfer")
-    .addHelpText("after", `
+    .addHelpText(
+      "after",
+      `
 Example:
   $ arc gateway transfer -w wallet123 -t 0xDest... -c ETH-SEPOLIA -a 50
-`)
+`
+    )
     .action(async (opts: { walletId?: string; to?: string; chain?: string; amount?: string }) => {
       if (!opts.walletId) {
         log.error("Wallet ID required. Use -w <wallet-id>");
@@ -130,7 +137,7 @@ Example:
               ["To", opts.to],
               ["Chain", opts.chain],
               ["Amount", `${opts.amount} USDC`],
-            ],
+            ]
           );
         }
       } catch (err) {
@@ -140,8 +147,7 @@ Example:
       }
     });
 
-  gw
-    .command("balance")
+  gw.command("balance")
     .description("Check Gateway unified balance")
     .argument("<walletId>", "Circle wallet ID")
     .action(async (walletId: string) => {
@@ -157,7 +163,7 @@ Example:
             balances.map((b) => [
               String(b.token?.symbol || b.token?.name || "Unknown"),
               String(b.amount || "0"),
-            ]),
+            ])
           );
         } else {
           log.warn("No balances found for this wallet.");

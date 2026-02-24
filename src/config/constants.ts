@@ -161,26 +161,115 @@ export const EVM_DIFFERENCES: EvmDifference[] = [
 
 export const PROVIDERS: ProviderInfo[] = [
   // Node providers
-  { name: "Alchemy", url: "https://www.alchemy.com/arc", description: "Scalable EVM access with enhanced APIs, monitoring, and debugging", category: "node" },
-  { name: "Blockdaemon", url: "https://www.blockdaemon.com/protocols/arc", description: "Institutional-grade secure and compliant infrastructure", category: "node" },
-  { name: "dRPC", url: "https://drpc.org/chainlist/arc-testnet-rpc", description: "Decentralized RPC aggregator with load-balanced access", category: "node" },
-  { name: "QuickNode", url: "https://www.quicknode.com/chains/arc", description: "High-performance global endpoints and APIs", category: "node" },
+  {
+    name: "Alchemy",
+    url: "https://www.alchemy.com/arc",
+    description: "Scalable EVM access with enhanced APIs, monitoring, and debugging",
+    category: "node",
+  },
+  {
+    name: "Blockdaemon",
+    url: "https://www.blockdaemon.com/protocols/arc",
+    description: "Institutional-grade secure and compliant infrastructure",
+    category: "node",
+  },
+  {
+    name: "dRPC",
+    url: "https://drpc.org/chainlist/arc-testnet-rpc",
+    description: "Decentralized RPC aggregator with load-balanced access",
+    category: "node",
+  },
+  {
+    name: "QuickNode",
+    url: "https://www.quicknode.com/chains/arc",
+    description: "High-performance global endpoints and APIs",
+    category: "node",
+  },
   // Data indexers
-  { name: "Envio", url: "https://envio.dev", description: "Event-driven indexing with HyperIndex for production APIs", category: "indexer" },
-  { name: "Goldsky", url: "https://goldsky.com", description: "Managed subgraph and data pipelines with sub-second latency", category: "indexer" },
-  { name: "The Graph", url: "https://thegraph.com", description: "Decentralized indexing protocol with subgraphs", category: "indexer" },
-  { name: "Thirdweb", url: "https://thirdweb.com", description: "Open-source blockchain data tooling with Insight", category: "indexer" },
+  {
+    name: "Envio",
+    url: "https://envio.dev",
+    description: "Event-driven indexing with HyperIndex for production APIs",
+    category: "indexer",
+  },
+  {
+    name: "Goldsky",
+    url: "https://goldsky.com",
+    description: "Managed subgraph and data pipelines with sub-second latency",
+    category: "indexer",
+  },
+  {
+    name: "The Graph",
+    url: "https://thegraph.com",
+    description: "Decentralized indexing protocol with subgraphs",
+    category: "indexer",
+  },
+  {
+    name: "Thirdweb",
+    url: "https://thirdweb.com",
+    description: "Open-source blockchain data tooling with Insight",
+    category: "indexer",
+  },
   // Account Abstraction
-  { name: "Biconomy", url: "https://www.biconomy.io", description: "Modular smart accounts, paymasters, and bundlers", category: "aa" },
-  { name: "Circle Wallets", url: "https://developers.circle.com/wallets", description: "End-to-end platform for Arc wallet management", category: "aa" },
-  { name: "Pimlico", url: "https://pimlico.io", description: "Bundler and paymaster infrastructure for ERC-4337", category: "aa" },
-  { name: "Privy", url: "https://www.privy.io", description: "Embedded wallets and user authentication", category: "aa" },
-  { name: "Zerodev", url: "https://zerodev.app", description: "ERC-4337 smart accounts with session keys and bundlers", category: "aa" },
+  {
+    name: "Biconomy",
+    url: "https://www.biconomy.io",
+    description: "Modular smart accounts, paymasters, and bundlers",
+    category: "aa",
+  },
+  {
+    name: "Circle Wallets",
+    url: "https://developers.circle.com/wallets",
+    description: "End-to-end platform for Arc wallet management",
+    category: "aa",
+  },
+  {
+    name: "Pimlico",
+    url: "https://pimlico.io",
+    description: "Bundler and paymaster infrastructure for ERC-4337",
+    category: "aa",
+  },
+  {
+    name: "Privy",
+    url: "https://www.privy.io",
+    description: "Embedded wallets and user authentication",
+    category: "aa",
+  },
+  {
+    name: "Zerodev",
+    url: "https://zerodev.app",
+    description: "ERC-4337 smart accounts with session keys and bundlers",
+    category: "aa",
+  },
   // Compliance
-  { name: "Elliptic", url: "https://www.elliptic.co", description: "Blockchain analytics, AML and sanctions compliance", category: "compliance" },
-  { name: "TRM Labs", url: "https://www.trmlabs.com", description: "Risk intelligence, wallet screening, and fraud detection", category: "compliance" },
+  {
+    name: "Elliptic",
+    url: "https://www.elliptic.co",
+    description: "Blockchain analytics, AML and sanctions compliance",
+    category: "compliance",
+  },
+  {
+    name: "TRM Labs",
+    url: "https://www.trmlabs.com",
+    description: "Risk intelligence, wallet screening, and fraud detection",
+    category: "compliance",
+  },
   // Explorer
-  { name: "Blockscout", url: "https://testnet.arcscan.app", description: "Open-source explorer with contract verification and APIs", category: "explorer" },
+  {
+    name: "Blockscout",
+    url: "https://testnet.arcscan.app",
+    description: "Open-source explorer with contract verification and APIs",
+    category: "explorer",
+  },
 ];
 
-export const CONFIG_KEYS = ["apiKey", "entitySecret", "rpcUrl", "network", "privateKey", "x402Port", "x402Price", "pinataJwt"] as const;
+export const CONFIG_KEYS = [
+  "apiKey",
+  "entitySecret",
+  "rpcUrl",
+  "network",
+  "privateKey",
+  "x402Port",
+  "x402Price",
+  "pinataJwt",
+] as const;

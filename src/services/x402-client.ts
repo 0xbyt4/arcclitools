@@ -1,8 +1,8 @@
 import { wrapFetchWithPayment, x402Client } from "@x402/fetch";
-import { requirePrivateKey, getRpcUrl } from "../config/env.js";
+import { requirePrivateKey } from "../config/env.js";
 
 export async function payForResource(url: string): Promise<Response> {
-  const privateKey = requirePrivateKey();
+  requirePrivateKey();
 
   const client = new x402Client();
   // Register EVM scheme for Arc Testnet - requires @x402/evm at runtime

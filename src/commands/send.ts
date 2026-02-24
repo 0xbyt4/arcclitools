@@ -30,7 +30,10 @@ export function registerSendCommand(program: Command): void {
     .description("Send USDC or ERC-20 tokens on Arc (uses private key from .env)")
     .argument("<amount>", "Amount to send")
     .argument("[to]", "Recipient address")
-    .option("-t, --token <token>", "Token to send: eurc, usyc, or contract address (default: native USDC)")
+    .option(
+      "-t, --token <token>",
+      "Token to send: eurc, usyc, or contract address (default: native USDC)"
+    )
     .action(async (amount: string, to: string | undefined, opts: { token?: string }) => {
       if (!validateAmount(amount)) {
         log.error(`Invalid amount: ${amount}`);
@@ -85,7 +88,7 @@ export function registerSendCommand(program: Command): void {
             ["Tx Hash", hash],
             ["Status", receipt.status === "success" ? "Confirmed" : "Failed"],
             ["Gas Used", receipt.gasUsed.toString()],
-          ],
+          ]
         );
 
         log.newline();

@@ -10,9 +10,7 @@ async function openInBrowser(url: string): Promise<void> {
 }
 
 export function registerExploreCommand(program: Command): void {
-  const explore = program
-    .command("explore")
-    .description("Open resources in Arc block explorer");
+  const explore = program.command("explore").description("Open resources in Arc block explorer");
 
   explore
     .command("tx <hash>")

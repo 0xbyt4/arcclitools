@@ -1,18 +1,15 @@
 import { Command } from "commander";
 import { log, table, spinner } from "../utils/logger.js";
-import { formatUSDC, formatGasPrice, formatTimestamp, colorStatus, shortenAddress } from "../utils/formatter.js";
+import { formatUSDC, colorStatus, shortenAddress } from "../utils/formatter.js";
 import { requireValidTxHash } from "../utils/validator.js";
 import { getTransaction, getTransactionReceipt, formatGasToUSDC } from "../services/rpc.js";
 import { ARC_TESTNET, NATIVE_USDC_DECIMALS } from "../config/constants.js";
-import { formatUnits, decodeFunctionData, formatGwei } from "viem";
+import { formatGwei } from "viem";
 
 export function registerTxCommand(program: Command): void {
-  const tx = program
-    .command("tx")
-    .description("Transaction operations");
+  const tx = program.command("tx").description("Transaction operations");
 
-  tx
-    .command("status <hash>")
+  tx.command("status <hash>")
     .description("Check transaction status and details")
     .action(async (hash: string) => {
       requireValidTxHash(hash);
@@ -29,7 +26,11 @@ export function registerTxCommand(program: Command): void {
 
         s.succeed("Transaction fetched");
 
-        const status = receipt ? (receipt.status === "success" ? "success" : "reverted") : "pending";
+        const status = receipt
+          ? receipt.status === "success"
+            ? "success"
+            : "reverted"
+          : "pending";
 
         log.newline();
         table(
@@ -41,13 +42,15 @@ export function registerTxCommand(program: Command): void {
             ["To", txData.to || "(contract creation)"],
             ["Value", formatUSDC(txData.value, NATIVE_USDC_DECIMALS)],
             ["Gas Price", txData.gasPrice ? `${formatGwei(txData.gasPrice)} Gwei` : "N/A"],
-            ...(receipt ? [
-              ["Gas Used", String(receipt.gasUsed)],
-              ["Tx Fee", `${formatGasToUSDC(receipt.gasUsed, receipt.effectiveGasPrice)} USDC`],
-              ["Block", String(receipt.blockNumber)],
-            ] : []),
+            ...(receipt
+              ? [
+                  ["Gas Used", String(receipt.gasUsed)],
+                  ["Tx Fee", `${formatGasToUSDC(receipt.gasUsed, receipt.effectiveGasPrice)} USDC`],
+                  ["Block", String(receipt.blockNumber)],
+                ]
+              : []),
             ...(txData.input && txData.input !== "0x" ? [["Has Input Data", "Yes"]] : []),
-          ],
+          ]
         );
 
         log.newline();
@@ -59,8 +62,7 @@ export function registerTxCommand(program: Command): void {
       }
     });
 
-  tx
-    .command("decode <hash>")
+  tx.command("decode <hash>")
     .description("Decode transaction input data")
     .action(async (hash: string) => {
       requireValidTxHash(hash);
@@ -83,9 +85,12 @@ export function registerTxCommand(program: Command): void {
             ["Hash", hash],
             ["From", txData.from],
             ["To", txData.to || "(contract creation)"],
-            ["Input Data (hex)", txData.input.slice(0, 74) + (txData.input.length > 74 ? "..." : "")],
+            [
+              "Input Data (hex)",
+              txData.input.slice(0, 74) + (txData.input.length > 74 ? "..." : ""),
+            ],
             ["Function Selector", txData.input.slice(0, 10)],
-          ],
+          ]
         );
 
         log.newline();
@@ -98,8 +103,7 @@ export function registerTxCommand(program: Command): void {
       }
     });
 
-  tx
-    .command("receipt <hash>")
+  tx.command("receipt <hash>")
     .description("Get transaction receipt")
     .action(async (hash: string) => {
       requireValidTxHash(hash);
@@ -125,14 +129,16 @@ export function registerTxCommand(program: Command): void {
             ["Tx Fee", `${formatGasToUSDC(receipt.gasUsed, receipt.effectiveGasPrice)} USDC`],
             ["Logs Count", String(receipt.logs.length)],
             ...(receipt.contractAddress ? [["Contract Created", receipt.contractAddress]] : []),
-          ],
+          ]
         );
 
         if (receipt.logs.length > 0) {
           log.newline();
           log.title("Event Logs");
           for (const [i, eventLog] of receipt.logs.entries()) {
-            console.log(`  Log #${i}: address=${shortenAddress(eventLog.address)} topics=${eventLog.topics.length}`);
+            console.log(
+              `  Log #${i}: address=${shortenAddress(eventLog.address)} topics=${eventLog.topics.length}`
+            );
           }
         }
 

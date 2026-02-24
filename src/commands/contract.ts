@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { log, table, spinner } from "../utils/logger.js";
+import { log, spinner } from "../utils/logger.js";
 import { promptText, promptSelect, promptAddress } from "../utils/prompts.js";
 import { requireValidAddress } from "../utils/validator.js";
 import * as circleContracts from "../services/circle-contracts.js";
@@ -24,12 +24,16 @@ export function registerContractCommand(program: Command): void {
     .action(async (opts) => {
       if (opts.foundry) {
         if (!foundry.checkFoundryInstalled()) {
-          log.error("Foundry not installed. Install with: curl -L https://foundry.paradigm.xyz | bash");
+          log.error(
+            "Foundry not installed. Install with: curl -L https://foundry.paradigm.xyz | bash"
+          );
           process.exitCode = 1;
           return;
         }
 
-        const contractPath = opts.contract || await promptText("Contract path (e.g., src/MyContract.sol:MyContract):");
+        const contractPath =
+          opts.contract ||
+          (await promptText("Contract path (e.g., src/MyContract.sol:MyContract):"));
         const s = spinner("Deploying with Foundry...");
         try {
           const output = foundry.deployWithFoundry({
@@ -48,8 +52,8 @@ export function registerContractCommand(program: Command): void {
       }
 
       if (opts.template) {
-        const walletId = opts.walletId || await promptText("Circle wallet ID:");
-        const name = opts.name || await promptText("Contract name:");
+        const walletId = opts.walletId || (await promptText("Circle wallet ID:"));
+        const name = opts.name || (await promptText("Contract name:"));
         const symbol = opts.symbol;
 
         const validTemplates = ["erc20", "erc721", "erc1155", "airdrop"];
@@ -82,17 +86,29 @@ export function registerContractCommand(program: Command): void {
       }
 
       const method = await promptSelect("Deployment method:", [
-        { name: "Foundry (forge create)", value: "foundry", description: "Deploy using local Foundry toolchain" },
-        { name: "Circle Template", value: "template", description: "Deploy pre-audited Circle template" },
+        {
+          name: "Foundry (forge create)",
+          value: "foundry",
+          description: "Deploy using local Foundry toolchain",
+        },
+        {
+          name: "Circle Template",
+          value: "template",
+          description: "Deploy pre-audited Circle template",
+        },
       ]);
 
       if (method === "foundry") {
         if (!foundry.checkFoundryInstalled()) {
-          log.error("Foundry not installed. Install with: curl -L https://foundry.paradigm.xyz | bash");
+          log.error(
+            "Foundry not installed. Install with: curl -L https://foundry.paradigm.xyz | bash"
+          );
           process.exitCode = 1;
           return;
         }
-        const contractPath = await promptText("Contract path (e.g., src/MyContract.sol:MyContract):");
+        const contractPath = await promptText(
+          "Contract path (e.g., src/MyContract.sol:MyContract):"
+        );
         const s = spinner("Deploying with Foundry...");
         try {
           const output = foundry.deployWithFoundry({ contractPath });
@@ -105,16 +121,18 @@ export function registerContractCommand(program: Command): void {
           process.exitCode = 1;
         }
       } else {
-        const template = await promptSelect("Template:", [
+        const template = (await promptSelect("Template:", [
           { name: "ERC-20", value: "erc20", description: "Fungible token" },
           { name: "ERC-721", value: "erc721", description: "NFT" },
           { name: "ERC-1155", value: "erc1155", description: "Multi-token" },
           { name: "Airdrop", value: "airdrop", description: "Token distribution" },
-        ]) as "erc20" | "erc721" | "erc1155" | "airdrop";
+        ])) as "erc20" | "erc721" | "erc1155" | "airdrop";
 
         const walletId = await promptText("Circle wallet ID:");
         const name = await promptText("Contract name:");
-        const symbol = ["erc20", "erc721"].includes(template) ? await promptText("Token symbol:") : undefined;
+        const symbol = ["erc20", "erc721"].includes(template)
+          ? await promptText("Token symbol:")
+          : undefined;
 
         const s = spinner(`Deploying ${template} template...`);
         try {
@@ -141,13 +159,14 @@ export function registerContractCommand(program: Command): void {
     .option("--write", "Send a transaction (write operation)")
     .option("-w, --wallet-id <id>", "Circle wallet ID (for write operations)")
     .action(async (opts) => {
-      const address = opts.address || await promptAddress("Contract address:");
-      const functionSig = opts.function || await promptText("Function signature (e.g., balanceOf(address)):");
+      const address = opts.address || (await promptAddress("Contract address:"));
+      const functionSig =
+        opts.function || (await promptText("Function signature (e.g., balanceOf(address)):"));
 
       requireValidAddress(address, "contract");
 
       if (opts.write) {
-        const walletId = opts.walletId || await promptText("Circle wallet ID:");
+        const walletId = opts.walletId || (await promptText("Circle wallet ID:"));
         const s = spinner("Executing transaction...");
         try {
           const result = await circleContracts.getContract(walletId);
@@ -186,13 +205,16 @@ export function registerContractCommand(program: Command): void {
     .option("--args <args...>", "Constructor arguments")
     .action(async (opts) => {
       if (!foundry.checkFoundryInstalled()) {
-        log.error("Foundry required for verification. Install with: curl -L https://foundry.paradigm.xyz | bash");
+        log.error(
+          "Foundry required for verification. Install with: curl -L https://foundry.paradigm.xyz | bash"
+        );
         process.exitCode = 1;
         return;
       }
 
-      const address = opts.address || await promptAddress("Contract address:");
-      const contractPath = opts.contract || await promptText("Contract path (e.g., src/MyContract.sol:MyContract):");
+      const address = opts.address || (await promptAddress("Contract address:"));
+      const contractPath =
+        opts.contract || (await promptText("Contract path (e.g., src/MyContract.sol:MyContract):"));
 
       requireValidAddress(address, "contract");
 
@@ -221,8 +243,8 @@ export function registerContractCommand(program: Command): void {
     .option("-a, --address <address>", "Contract address")
     .option("-n, --name <name>", "Contract name")
     .action(async (opts) => {
-      const address = opts.address || await promptAddress("Contract address:");
-      const name = opts.name || await promptText("Contract name:");
+      const address = opts.address || (await promptAddress("Contract address:"));
+      const name = opts.name || (await promptText("Contract name:"));
 
       requireValidAddress(address, "contract");
 
@@ -239,9 +261,7 @@ export function registerContractCommand(program: Command): void {
       }
     });
 
-  const events = contract
-    .command("events")
-    .description("Contract event monitoring");
+  const events = contract.command("events").description("Contract event monitoring");
 
   events
     .command("monitor")
@@ -249,8 +269,10 @@ export function registerContractCommand(program: Command): void {
     .option("-a, --address <address>", "Contract address")
     .option("-e, --event <signature>", "Event signature (e.g., Transfer(address,address,uint256))")
     .action(async (opts) => {
-      const address = opts.address || await promptAddress("Contract address:");
-      const eventSig = opts.event || await promptText("Event signature (e.g., Transfer(address,address,uint256)):");
+      const address = opts.address || (await promptAddress("Contract address:"));
+      const eventSig =
+        opts.event ||
+        (await promptText("Event signature (e.g., Transfer(address,address,uint256)):"));
 
       requireValidAddress(address, "contract");
 
@@ -279,7 +301,7 @@ export function registerContractCommand(program: Command): void {
     .option("-a, --address <address>", "Contract address")
     .option("-l, --limit <number>", "Number of logs to fetch", "20")
     .action(async (opts) => {
-      const address = opts.address || await promptAddress("Contract address:");
+      const address = opts.address || (await promptAddress("Contract address:"));
 
       requireValidAddress(address, "contract");
 

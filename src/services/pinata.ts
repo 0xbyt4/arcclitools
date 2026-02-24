@@ -10,7 +10,9 @@ interface PinataResponse {
   Timestamp: string;
 }
 
-export async function uploadFileToPinata(filePath: string): Promise<{ cid: string; uri: string; gatewayUrl: string }> {
+export async function uploadFileToPinata(
+  filePath: string
+): Promise<{ cid: string; uri: string; gatewayUrl: string }> {
   const jwt = requirePinataJWT();
   const fileData = readFileSync(filePath);
   const fileName = basename(filePath);
@@ -35,7 +37,7 @@ export async function uploadFileToPinata(filePath: string): Promise<{ cid: strin
     throw new Error(`Pinata upload failed (${response.status}): ${errorText}`);
   }
 
-  const data = await response.json() as PinataResponse;
+  const data = (await response.json()) as PinataResponse;
 
   return {
     cid: data.IpfsHash,
@@ -44,7 +46,10 @@ export async function uploadFileToPinata(filePath: string): Promise<{ cid: strin
   };
 }
 
-export async function uploadJSONToPinata(json: Record<string, unknown>, name: string): Promise<{ cid: string; uri: string; gatewayUrl: string }> {
+export async function uploadJSONToPinata(
+  json: Record<string, unknown>,
+  name: string
+): Promise<{ cid: string; uri: string; gatewayUrl: string }> {
   const jwt = requirePinataJWT();
 
   const response = await fetch(`${PINATA_API_URL}/pinning/pinJSONToIPFS`, {
@@ -64,7 +69,7 @@ export async function uploadJSONToPinata(json: Record<string, unknown>, name: st
     throw new Error(`Pinata upload failed (${response.status}): ${errorText}`);
   }
 
-  const data = await response.json() as PinataResponse;
+  const data = (await response.json()) as PinataResponse;
 
   return {
     cid: data.IpfsHash,

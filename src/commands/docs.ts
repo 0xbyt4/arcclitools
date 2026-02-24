@@ -6,17 +6,17 @@ import { join, relative } from "path";
 const DOCS_URL = "https://developers.circle.com/arc";
 
 function findDocsDir(): string | null {
-  const candidates = [
-    join(process.cwd(), "arc-docs"),
-    join(process.cwd(), "..", "arc-docs"),
-  ];
+  const candidates = [join(process.cwd(), "arc-docs"), join(process.cwd(), "..", "arc-docs")];
   for (const dir of candidates) {
     if (existsSync(dir)) return dir;
   }
   return null;
 }
 
-function searchFiles(dir: string, query: string): Array<{ file: string; line: number; text: string }> {
+function searchFiles(
+  dir: string,
+  query: string
+): Array<{ file: string; line: number; text: string }> {
   const results: Array<{ file: string; line: number; text: string }> = [];
   const queryLower = query.toLowerCase();
 
@@ -47,9 +47,7 @@ function searchFiles(dir: string, query: string): Array<{ file: string; line: nu
 }
 
 export function registerDocsCommand(program: Command): void {
-  const docs = program
-    .command("docs")
-    .description("Arc documentation access");
+  const docs = program.command("docs").description("Arc documentation access");
 
   docs
     .command("open")

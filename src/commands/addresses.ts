@@ -10,7 +10,10 @@ export function registerAddressesCommand(program: Command): void {
   addresses
     .command("list")
     .description("List all known contract addresses")
-    .option("-c, --category <cat>", "Filter by category (stablecoins, cctp, gateway, payments, common)")
+    .option(
+      "-c, --category <cat>",
+      "Filter by category (stablecoins, cctp, gateway, payments, common)"
+    )
     .action((opts) => {
       const contracts = ARC_TESTNET.contracts;
 
@@ -36,7 +39,7 @@ export function registerAddressesCommand(program: Command): void {
           ["Name", "Address", "Description"],
           catKeys
             .filter((k) => contracts[k])
-            .map((k) => [k, contracts[k].address, contracts[k].description]),
+            .map((k) => [k, contracts[k].address, contracts[k].description])
         );
         return;
       }
@@ -47,7 +50,7 @@ export function registerAddressesCommand(program: Command): void {
           ["Name", "Address", "Description"],
           catKeys
             .filter((k) => contracts[k])
-            .map((k) => [k, contracts[k].address, contracts[k].description]),
+            .map((k) => [k, contracts[k].address, contracts[k].description])
         );
         log.newline();
       }

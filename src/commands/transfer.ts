@@ -5,7 +5,11 @@ import { validateAddress, validateAmount } from "../utils/validator.js";
 import * as circleWallets from "../services/circle-wallets.js";
 import { ARC_TESTNET } from "../config/constants.js";
 
-async function doTransfer(tokenName: string, tokenAddress: string, opts: { from?: string; to?: string; amount?: string }) {
+async function doTransfer(
+  tokenName: string,
+  tokenAddress: string,
+  opts: { from?: string; to?: string; amount?: string }
+) {
   if (!opts.from || !validateAddress(opts.from)) {
     log.error(`Invalid or missing sender address. Use -f <address>`);
     process.exitCode = 1;
@@ -50,7 +54,7 @@ async function doTransfer(tokenName: string, tokenAddress: string, opts: { from?
           ["From", opts.from],
           ["To", opts.to],
           ["Amount", `${opts.amount} ${tokenName}`],
-        ],
+        ]
       );
 
       if (data.id) {
@@ -69,14 +73,17 @@ export function registerTransferCommand(program: Command): void {
   const transfer = program
     .command("transfer")
     .description("Transfer stablecoins on Arc (via Circle Developer-Controlled Wallets)")
-    .addHelpText("after", `
+    .addHelpText(
+      "after",
+      `
 Requires Circle API credentials:
   arc config set api-key <your-key>
   arc config set entity-secret <your-secret>
 
 This uses Circle's Developer-Controlled Wallets API.
 For simple transfers with a local private key, use: arc send
-`);
+`
+    );
 
   transfer
     .command("usdc")
@@ -117,7 +124,7 @@ For simple transfers with a local private key, use: arc send
               ...(tx.sourceAddress ? [["From", String(tx.sourceAddress)]] : []),
               ...(tx.destinationAddress ? [["To", String(tx.destinationAddress)]] : []),
               ...(tx.createDate ? [["Created", String(tx.createDate)]] : []),
-            ],
+            ]
           );
 
           const txHash = tx.txHash || data.txHash;

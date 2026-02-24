@@ -1,14 +1,17 @@
 import { Command } from "commander";
-import { ARC_TESTNET, ALTERNATIVE_RPCS, ALTERNATIVE_WS, MIN_BASE_FEE_GWEI } from "../config/constants.js";
+import {
+  ARC_TESTNET,
+  ALTERNATIVE_RPCS,
+  ALTERNATIVE_WS,
+  MIN_BASE_FEE_GWEI,
+} from "../config/constants.js";
 import { getRpcUrl } from "../config/env.js";
 import { getBlockNumber, getBaseFee, formatGasPriceDisplay } from "../services/rpc.js";
 import { log, table, spinner } from "../utils/logger.js";
 import { formatBlockNumber } from "../utils/formatter.js";
 
 export function registerNetworkCommand(program: Command): void {
-  const network = program
-    .command("network")
-    .description("Arc network information and status");
+  const network = program.command("network").description("Arc network information and status");
 
   network
     .command("info")
@@ -31,7 +34,7 @@ export function registerNetworkCommand(program: Command): void {
           ["EVM Target", "Prague hard fork"],
           ["Consensus", "Malachite (Tendermint-based BFT)"],
           ["Finality", "Deterministic, instant (<1s)"],
-        ],
+        ]
       );
 
       log.newline();
@@ -64,7 +67,7 @@ export function registerNetworkCommand(program: Command): void {
             ["RPC URL", rpcUrl],
             ["Block Height", formatBlockNumber(blockNumber)],
             ["Status", "Connected"],
-          ],
+          ]
         );
       } catch (err) {
         s.fail("Failed to connect to Arc network");
@@ -91,7 +94,7 @@ export function registerNetworkCommand(program: Command): void {
             ["Min Base Fee", `${MIN_BASE_FEE_GWEI} Gwei`],
             ["Est. Transfer Cost (21k gas)", estimatedTxCost],
             ["Block", formatBlockNumber(blockNumber)],
-          ],
+          ]
         );
 
         log.newline();

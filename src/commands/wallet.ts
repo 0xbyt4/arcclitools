@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import { log, table, spinner } from "../utils/logger.js";
 import { formatUSDC, formatToken, shortenAddress } from "../utils/formatter.js";
-import { promptText, promptConfirm } from "../utils/prompts.js";
+import { promptText } from "../utils/prompts.js";
 import { validateAddress } from "../utils/validator.js";
 import * as circleWallets from "../services/circle-wallets.js";
 import { getBalance, readContract } from "../services/rpc.js";
@@ -51,9 +51,7 @@ function backupAndWriteEnv(address: string, privateKey: string): { backedUp: boo
 }
 
 export function registerWalletCommand(program: Command): void {
-  const wallet = program
-    .command("wallet")
-    .description("Wallet management");
+  const wallet = program.command("wallet").description("Wallet management");
 
   wallet
     .command("create")
@@ -78,7 +76,7 @@ export function registerWalletCommand(program: Command): void {
               String(w.address || ""),
               String(w.blockchain || ""),
               String(w.state || ""),
-            ]),
+            ])
           );
           log.newline();
           log.info(`Wallet Set ID: ${walletSet.id}`);
@@ -97,7 +95,9 @@ export function registerWalletCommand(program: Command): void {
     .option("--no-save", "Do not save to .env file")
     .action((opts) => {
       if (!checkFoundryInstalled()) {
-        log.error("Foundry not installed. Install with: curl -L https://foundry.paradigm.xyz | bash");
+        log.error(
+          "Foundry not installed. Install with: curl -L https://foundry.paradigm.xyz | bash"
+        );
         process.exitCode = 1;
         return;
       }
@@ -159,7 +159,7 @@ export function registerWalletCommand(program: Command): void {
             shortenAddress(String(w.address || "")),
             String(w.blockchain || ""),
             String(w.state || ""),
-          ]),
+          ])
         );
       } catch (err) {
         s.fail("Failed to list wallets");
@@ -194,7 +194,13 @@ export function registerWalletCommand(program: Command): void {
         const nativeBalance = await getBalance(addr);
 
         const erc20Abi = [
-          { type: "function", name: "balanceOf", inputs: [{ type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
+          {
+            type: "function",
+            name: "balanceOf",
+            inputs: [{ type: "address" }],
+            outputs: [{ type: "uint256" }],
+            stateMutability: "view",
+          },
         ] as const;
 
         const results = await Promise.allSettled([
@@ -214,8 +220,8 @@ export function registerWalletCommand(program: Command): void {
 
         s.succeed("Balances fetched");
 
-        const eurcBalance = results[0].status === "fulfilled" ? results[0].value as bigint : 0n;
-        const usycBalance = results[1].status === "fulfilled" ? results[1].value as bigint : 0n;
+        const eurcBalance = results[0].status === "fulfilled" ? (results[0].value as bigint) : 0n;
+        const usycBalance = results[1].status === "fulfilled" ? (results[1].value as bigint) : 0n;
 
         log.newline();
         log.label("Address", address);
@@ -226,7 +232,7 @@ export function registerWalletCommand(program: Command): void {
             ["USDC (native)", formatUSDC(nativeBalance, NATIVE_USDC_DECIMALS), "18"],
             ["EURC", formatToken(eurcBalance, 6, "EURC"), "6"],
             ["USYC", formatToken(usycBalance, 6, "USYC"), "6"],
-          ],
+          ]
         );
       } catch (err) {
         s.fail("Failed to fetch balances");
@@ -298,7 +304,11 @@ export function registerWalletCommand(program: Command): void {
         s.fail("Faucet request failed");
         const message = (err as Error).message;
 
-        if (message.includes("API key") || message.includes("api-key") || message.includes("apiKey")) {
+        if (
+          message.includes("API key") ||
+          message.includes("api-key") ||
+          message.includes("apiKey")
+        ) {
           log.error("Circle API key required for programmatic faucet access.");
           log.dim("Set your API key: arc config set api-key <your-key>");
           log.dim("Or use --browser flag to open the faucet in browser.");

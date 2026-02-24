@@ -1,0 +1,8 @@
+dist/
+node_modules/
+out/
+cache/
+lib/
+*.sol
+*.json
+package-lock.json

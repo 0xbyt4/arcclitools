@@ -10,7 +10,6 @@ import {
   waitForReceipt,
   getTokenInfo,
   readContract,
-  getBalance,
   getWalletClient,
 } from "../services/rpc.js";
 import { loadDeployments } from "../services/deployments.js";
@@ -71,7 +70,10 @@ export function registerDexCommand(program: Command): void {
       }
 
       const dexAddress = resolveDexAddress(opts);
-      if (!dexAddress) { process.exitCode = 1; return; }
+      if (!dexAddress) {
+        process.exitCode = 1;
+        return;
+      }
 
       const abi = loadDEXAbi();
 
@@ -112,80 +114,100 @@ export function registerDexCommand(program: Command): void {
     .argument("<usdc-amount>", "Amount of USDC to add")
     .argument("<token-amount>", "Amount of tokens to add")
     .option("--dex <address>", "DEX contract address")
-    .addHelpText("after", `
+    .addHelpText(
+      "after",
+      `
 Examples:
   $ arc dex add-liquidity 0xToken... 100 50000
   $ arc dex add-liquidity 0xToken... 10 1000 --dex 0xDEX...
 
 Adds USDC (native) and ERC-20 tokens to the pool.
 Token approval is handled automatically.
-`)
-    .action(async (token: string, usdcAmount: string, tokenAmount: string, opts: { dex?: string }) => {
-      if (!validateAddress(token)) { log.error(`Invalid token: ${token}`); process.exitCode = 1; return; }
-      if (!validateAmount(usdcAmount)) { log.error(`Invalid USDC amount: ${usdcAmount}`); process.exitCode = 1; return; }
-      if (!validateAmount(tokenAmount)) { log.error(`Invalid token amount: ${tokenAmount}`); process.exitCode = 1; return; }
+`
+    )
+    .action(
+      async (token: string, usdcAmount: string, tokenAmount: string, opts: { dex?: string }) => {
+        if (!validateAddress(token)) {
+          log.error(`Invalid token: ${token}`);
+          process.exitCode = 1;
+          return;
+        }
+        if (!validateAmount(usdcAmount)) {
+          log.error(`Invalid USDC amount: ${usdcAmount}`);
+          process.exitCode = 1;
+          return;
+        }
+        if (!validateAmount(tokenAmount)) {
+          log.error(`Invalid token amount: ${tokenAmount}`);
+          process.exitCode = 1;
+          return;
+        }
 
-      const dexAddress = resolveDexAddress(opts);
-      if (!dexAddress) { process.exitCode = 1; return; }
+        const dexAddress = resolveDexAddress(opts);
+        if (!dexAddress) {
+          process.exitCode = 1;
+          return;
+        }
 
-      const abi = loadDEXAbi();
+        const abi = loadDEXAbi();
 
-      const s = spinner("Fetching token info...");
-      try {
-        const tokenInfo = await getTokenInfo(token as `0x${string}`);
-        const usdcWei = parseUnits(usdcAmount, NATIVE_USDC_DECIMALS);
-        const tokenWei = parseUnits(tokenAmount, tokenInfo.decimals);
+        const s = spinner("Fetching token info...");
+        try {
+          const tokenInfo = await getTokenInfo(token as `0x${string}`);
+          const usdcWei = parseUnits(usdcAmount, NATIVE_USDC_DECIMALS);
+          const tokenWei = parseUnits(tokenAmount, tokenInfo.decimals);
 
-        log.title("Add Liquidity");
-        log.label("Pool", `USDC / ${tokenInfo.symbol}`);
-        log.label("USDC", `${usdcAmount} USDC`);
-        log.label("Token", `${tokenAmount} ${tokenInfo.symbol}`);
-        log.newline();
+          log.title("Add Liquidity");
+          log.label("Pool", `USDC / ${tokenInfo.symbol}`);
+          log.label("USDC", `${usdcAmount} USDC`);
+          log.label("Token", `${tokenAmount} ${tokenInfo.symbol}`);
+          log.newline();
 
-        // Approve token spending
-        s.text = `Approving ${tokenInfo.symbol} for DEX...`;
-        const approveHash = await approveERC20({
-          tokenAddress: token as `0x${string}`,
-          spender: dexAddress,
-          amount: tokenWei,
-        });
-        await waitForReceipt(approveHash);
-        log.dim(`Approved ${tokenInfo.symbol}`);
+          // Approve token spending
+          s.text = `Approving ${tokenInfo.symbol} for DEX...`;
+          const approveHash = await approveERC20({
+            tokenAddress: token as `0x${string}`,
+            spender: dexAddress,
+            amount: tokenWei,
+          });
+          await waitForReceipt(approveHash);
+          log.dim(`Approved ${tokenInfo.symbol}`);
 
-        // Add liquidity
-        s.text = "Adding liquidity...";
-        const hash = await callContractWithValue({
-          address: dexAddress,
-          abi,
-          functionName: "addLiquidity",
-          args: [token as `0x${string}`, tokenWei],
-          value: usdcWei,
-        });
-        const receipt = await waitForReceipt(hash);
+          // Add liquidity
+          s.text = "Adding liquidity...";
+          const hash = await callContractWithValue({
+            address: dexAddress,
+            abi,
+            functionName: "addLiquidity",
+            args: [token as `0x${string}`, tokenWei],
+            value: usdcWei,
+          });
+          const receipt = await waitForReceipt(hash);
 
-        s.succeed("Liquidity added");
-        log.newline();
+          s.succeed("Liquidity added");
+          log.newline();
 
-        table(
-          ["Field", "Value"],
-          [
-            ["Pool", `USDC / ${tokenInfo.symbol}`],
-            ["USDC Added", `${usdcAmount} USDC`],
-            ["Token Added", `${tokenAmount} ${tokenInfo.symbol}`],
-            ["Tx Hash", hash],
-            ["Block", receipt.blockNumber.toString()],
-          ],
-        );
+          table(
+            ["Field", "Value"],
+            [
+              ["Pool", `USDC / ${tokenInfo.symbol}`],
+              ["USDC Added", `${usdcAmount} USDC`],
+              ["Token Added", `${tokenAmount} ${tokenInfo.symbol}`],
+              ["Tx Hash", hash],
+              ["Block", receipt.blockNumber.toString()],
+            ]
+          );
 
-        log.newline();
-        log.dim(`Swap: arc dex swap 1 usdc ${token}`);
-        log.dim(`Remove: arc dex remove-liquidity ${token} --all`);
-      } catch (err) {
-        s.fail("Failed to add liquidity");
-        log.error((err as Error).message);
-        process.exitCode = 1;
+          log.newline();
+          log.dim(`Swap: arc dex swap 1 usdc ${token}`);
+          log.dim(`Remove: arc dex remove-liquidity ${token} --all`);
+        } catch (err) {
+          s.fail("Failed to add liquidity");
+          log.error((err as Error).message);
+          process.exitCode = 1;
+        }
       }
-    });
+    );
 
   dex
     .command("remove-liquidity")
@@ -195,7 +217,11 @@ Token approval is handled automatically.
     .option("--all", "Remove all your liquidity")
     .option("--dex <address>", "DEX contract address")
     .action(async (token: string, opts: { amount?: string; all?: boolean; dex?: string }) => {
-      if (!validateAddress(token)) { log.error(`Invalid token: ${token}`); process.exitCode = 1; return; }
+      if (!validateAddress(token)) {
+        log.error(`Invalid token: ${token}`);
+        process.exitCode = 1;
+        return;
+      }
 
       if (!opts.amount && !opts.all) {
         log.error("Specify --amount <lp> or --all");
@@ -204,7 +230,10 @@ Token approval is handled automatically.
       }
 
       const dexAddress = resolveDexAddress(opts);
-      if (!dexAddress) { process.exitCode = 1; return; }
+      if (!dexAddress) {
+        process.exitCode = 1;
+        return;
+      }
 
       const abi = loadDEXAbi();
 
@@ -216,12 +245,12 @@ Token approval is handled automatically.
 
         let lpAmount: bigint;
         if (opts.all) {
-          lpAmount = await readContract({
+          lpAmount = (await readContract({
             address: dexAddress,
             abi: abi as readonly unknown[],
             functionName: "getLPBalance",
             args: [token as `0x${string}`, account],
-          }) as bigint;
+          })) as bigint;
 
           if (lpAmount === 0n) {
             s.fail("No liquidity to remove");
@@ -256,7 +285,7 @@ Token approval is handled automatically.
             ["LP Burned", lpAmount.toString()],
             ["Tx Hash", hash],
             ["Block", receipt.blockNumber.toString()],
-          ],
+          ]
         );
       } catch (err) {
         s.fail("Failed to remove liquidity");
@@ -272,15 +301,22 @@ Token approval is handled automatically.
     .argument("<from>", "Source: 'usdc' or token address")
     .argument("<to>", "Destination: 'usdc' or token address")
     .option("--dex <address>", "DEX contract address")
-    .addHelpText("after", `
+    .addHelpText(
+      "after",
+      `
 Examples:
   $ arc dex swap 10 usdc 0xToken...        # Swap 10 USDC for tokens
   $ arc dex swap 5000 0xToken... usdc       # Swap 5000 tokens for USDC
 
 Get a quote first: arc dex quote 10 usdc 0xToken...
-`)
+`
+    )
     .action(async (amount: string, from: string, to: string, opts: { dex?: string }) => {
-      if (!validateAmount(amount)) { log.error(`Invalid amount: ${amount}`); process.exitCode = 1; return; }
+      if (!validateAmount(amount)) {
+        log.error(`Invalid amount: ${amount}`);
+        process.exitCode = 1;
+        return;
+      }
 
       const usdcToToken = isUSDC(from) && !isUSDC(to);
       const tokenToUSDC = !isUSDC(from) && isUSDC(to);
@@ -299,7 +335,10 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
       }
 
       const dexAddress = resolveDexAddress(opts);
-      if (!dexAddress) { process.exitCode = 1; return; }
+      if (!dexAddress) {
+        process.exitCode = 1;
+        return;
+      }
 
       const abi = loadDEXAbi();
 
@@ -314,19 +353,22 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
         const toDecimals = usdcToToken ? tokenInfo.decimals : NATIVE_USDC_DECIMALS;
         const amountWei = parseUnits(amount, fromDecimals);
 
-        const quoteRaw = await readContract({
+        const quoteRaw = (await readContract({
           address: dexAddress,
           abi: abi as readonly unknown[],
           functionName: "getQuote",
           args: [tokenAddress as `0x${string}`, amountWei, usdcToToken],
-        }) as bigint;
+        })) as bigint;
 
         const quoteFormatted = formatUnits(quoteRaw, toDecimals);
 
         log.title("Swap");
         log.label("From", `${amount} ${fromLabel}`);
         log.label("To", `~${parseFloat(quoteFormatted).toFixed(6)} ${toLabel}`);
-        log.label("Rate", `1 ${fromLabel} = ~${(parseFloat(quoteFormatted) / parseFloat(amount)).toFixed(6)} ${toLabel}`);
+        log.label(
+          "Rate",
+          `1 ${fromLabel} = ~${(parseFloat(quoteFormatted) / parseFloat(amount)).toFixed(6)} ${toLabel}`
+        );
         log.newline();
 
         let hash: `0x${string}`;
@@ -371,7 +413,7 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
             ["Fee", "0.3%"],
             ["Tx Hash", hash],
             ["Block", receipt.blockNumber.toString()],
-          ],
+          ]
         );
 
         log.newline();
@@ -391,7 +433,11 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
     .argument("<to>", "Destination: 'usdc' or token address")
     .option("--dex <address>", "DEX contract address")
     .action(async (amount: string, from: string, to: string, opts: { dex?: string }) => {
-      if (!validateAmount(amount)) { log.error(`Invalid amount: ${amount}`); process.exitCode = 1; return; }
+      if (!validateAmount(amount)) {
+        log.error(`Invalid amount: ${amount}`);
+        process.exitCode = 1;
+        return;
+      }
 
       const usdcToToken = isUSDC(from) && !isUSDC(to);
       const tokenToUSDC = !isUSDC(from) && isUSDC(to);
@@ -410,7 +456,10 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
       }
 
       const dexAddress = resolveDexAddress(opts);
-      if (!dexAddress) { process.exitCode = 1; return; }
+      if (!dexAddress) {
+        process.exitCode = 1;
+        return;
+      }
 
       const abi = loadDEXAbi();
 
@@ -423,12 +472,12 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
         const toDecimals = usdcToToken ? tokenInfo.decimals : NATIVE_USDC_DECIMALS;
         const amountWei = parseUnits(amount, fromDecimals);
 
-        const quoteRaw = await readContract({
+        const quoteRaw = (await readContract({
           address: dexAddress,
           abi: abi as readonly unknown[],
           functionName: "getQuote",
           args: [tokenAddress as `0x${string}`, amountWei, usdcToToken],
-        }) as bigint;
+        })) as bigint;
 
         const quoteFormatted = formatUnits(quoteRaw, toDecimals);
         const rate = parseFloat(quoteFormatted) / parseFloat(amount);
@@ -441,7 +490,7 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
             ["Output", `${parseFloat(quoteFormatted).toFixed(6)} ${toLabel}`],
             ["Rate", `1 ${fromLabel} = ${rate.toFixed(6)} ${toLabel}`],
             ["Fee", "0.3%"],
-          ],
+          ]
         );
 
         log.newline();
@@ -458,17 +507,20 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
     .option("--dex <address>", "DEX contract address")
     .action(async (opts: { dex?: string }) => {
       const dexAddress = resolveDexAddress(opts);
-      if (!dexAddress) { process.exitCode = 1; return; }
+      if (!dexAddress) {
+        process.exitCode = 1;
+        return;
+      }
 
       const abi = loadDEXAbi();
 
       const s = spinner("Fetching pools...");
       try {
-        const poolCount = await readContract({
+        const poolCount = (await readContract({
           address: dexAddress,
           abi: abi as readonly unknown[],
           functionName: "getPoolCount",
-        }) as bigint;
+        })) as bigint;
 
         if (poolCount === 0n) {
           s.succeed("No pools");
@@ -481,12 +533,12 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
         const account = wallet.account!.address;
 
         for (let i = 0n; i < poolCount; i++) {
-          const tokenAddr = await readContract({
+          const tokenAddr = (await readContract({
             address: dexAddress,
             abi: abi as readonly unknown[],
             functionName: "getPoolToken",
             args: [i],
-          }) as string;
+          })) as string;
 
           const [reserves, tokenInfo, lpBalance] = await Promise.all([
             readContract({
@@ -520,10 +572,7 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
         s.succeed(`${poolCount} pool(s) found`);
         log.newline();
 
-        table(
-          ["#", "Pair", "USDC Reserve", "Token Reserve", "Your LP", "Token Address"],
-          rows,
-        );
+        table(["#", "Pair", "USDC Reserve", "Token Reserve", "Your LP", "Token Address"], rows);
       } catch (err) {
         s.fail("Failed to fetch pools");
         log.error((err as Error).message);

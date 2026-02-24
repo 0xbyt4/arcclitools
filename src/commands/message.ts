@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { log, table, spinner } from "../utils/logger.js";
-import { getWalletClient, getPublicClient, arcTestnet, waitForReceipt, getTransaction } from "../services/rpc.js";
+import { getWalletClient, arcTestnet, waitForReceipt, getTransaction } from "../services/rpc.js";
 import { validateAddress } from "../utils/validator.js";
 import { ARC_TESTNET } from "../config/constants.js";
 import { toHex, fromHex } from "viem";
@@ -57,7 +57,7 @@ export function registerMessageCommand(program: Command): void {
             ["Tx Hash", hash],
             ["Block", receipt.blockNumber.toString()],
             ["Status", receipt.status === "success" ? "Confirmed" : "Failed"],
-          ],
+          ]
         );
 
         log.newline();
@@ -96,7 +96,7 @@ export function registerMessageCommand(program: Command): void {
             ["To", tx.to || "Contract creation"],
             ["Block", tx.blockNumber?.toString() || "Pending"],
             ["Message", text],
-          ],
+          ]
         );
 
         log.newline();

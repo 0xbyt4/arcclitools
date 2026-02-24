@@ -46,7 +46,9 @@ describe("validateAddress", () => {
 
 describe("validateTxHash", () => {
   it("accepts valid 66-char tx hash", () => {
-    expect(validateTxHash("0x7c507aeb7d4714fd0dbf237114782bcc128d40c97325de7ee9ba8a9a48037638")).toBe(true);
+    expect(
+      validateTxHash("0x7c507aeb7d4714fd0dbf237114782bcc128d40c97325de7ee9ba8a9a48037638")
+    ).toBe(true);
   });
 
   it("rejects short hash", () => {
@@ -54,7 +56,9 @@ describe("validateTxHash", () => {
   });
 
   it("rejects hash without 0x prefix", () => {
-    expect(validateTxHash("7c507aeb7d4714fd0dbf237114782bcc128d40c97325de7ee9ba8a9a48037638")).toBe(false);
+    expect(validateTxHash("7c507aeb7d4714fd0dbf237114782bcc128d40c97325de7ee9ba8a9a48037638")).toBe(
+      false
+    );
   });
 
   it("rejects empty string", () => {
@@ -102,11 +106,15 @@ describe("validateAmount", () => {
 
 describe("validatePrivateKey", () => {
   it("accepts 64-char hex without prefix", () => {
-    expect(validatePrivateKey("ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")).toBe(true);
+    expect(
+      validatePrivateKey("ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+    ).toBe(true);
   });
 
   it("accepts 64-char hex with 0x prefix", () => {
-    expect(validatePrivateKey("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")).toBe(true);
+    expect(
+      validatePrivateKey("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+    ).toBe(true);
   });
 
   it("rejects short key", () => {
@@ -114,7 +122,9 @@ describe("validatePrivateKey", () => {
   });
 
   it("rejects non-hex characters", () => {
-    expect(validatePrivateKey("0xZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")).toBe(false);
+    expect(
+      validatePrivateKey("0xZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
+    ).toBe(false);
   });
 
   it("rejects empty string", () => {

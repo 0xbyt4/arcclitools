@@ -29,9 +29,9 @@ export function requirePinataJWT(): string {
   if (!jwt) {
     throw new Error(
       "Pinata JWT not found. Set it with:\n" +
-      "  arc config set pinata-jwt <your-jwt>\n" +
-      "  or set PINATA_JWT in .env\n\n" +
-      "Get your JWT at: https://app.pinata.cloud/developers/api-keys"
+        "  arc config set pinata-jwt <your-jwt>\n" +
+        "  or set PINATA_JWT in .env\n\n" +
+        "Get your JWT at: https://app.pinata.cloud/developers/api-keys"
     );
   }
   return jwt;
@@ -53,8 +53,8 @@ export function requireApiKey(): string {
   if (!key) {
     throw new Error(
       "Circle API key not found. Set it with:\n" +
-      "  arc config set api-key <your-key>\n" +
-      "  or set CIRCLE_API_KEY in .env"
+        "  arc config set api-key <your-key>\n" +
+        "  or set CIRCLE_API_KEY in .env"
     );
   }
   return key;
@@ -65,8 +65,8 @@ export function requireEntitySecret(): string {
   if (!secret) {
     throw new Error(
       "Circle entity secret not found. Set it with:\n" +
-      "  arc config set entity-secret <your-secret>\n" +
-      "  or set CIRCLE_ENTITY_SECRET in .env"
+        "  arc config set entity-secret <your-secret>\n" +
+        "  or set CIRCLE_ENTITY_SECRET in .env"
     );
   }
   return secret;
@@ -77,8 +77,8 @@ export function requirePrivateKey(): string {
   if (!key) {
     throw new Error(
       "Private key not found. Set it with:\n" +
-      "  arc config set private-key <your-key>\n" +
-      "  or set PRIVATE_KEY in .env"
+        "  arc config set private-key <your-key>\n" +
+        "  or set PRIVATE_KEY in .env"
     );
   }
   return key;

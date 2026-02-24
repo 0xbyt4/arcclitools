@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { existsSync, unlinkSync, readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import {
   loadDeployments,
@@ -92,7 +92,9 @@ describe("updateDeployment", () => {
   });
 
   it("returns false for non-existent address", () => {
-    const result = updateDeployment("0x0000000000000000000000000000000000000000", { verified: true });
+    const result = updateDeployment("0x0000000000000000000000000000000000000000", {
+      verified: true,
+    });
     expect(result).toBe(false);
   });
 });

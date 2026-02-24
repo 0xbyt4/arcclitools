@@ -3,9 +3,7 @@ import { log, table } from "../utils/logger.js";
 import { EVM_DIFFERENCES, PROVIDERS } from "../config/constants.js";
 
 export function registerInfoCommand(program: Command): void {
-  const info = program
-    .command("info")
-    .description("Arc network information and ecosystem");
+  const info = program.command("info").description("Arc network information and ecosystem");
 
   info
     .command("evm")
@@ -14,13 +12,15 @@ export function registerInfoCommand(program: Command): void {
       log.title("EVM Compatibility: Ethereum vs Arc");
       table(
         ["Area", "Ethereum", "Arc"],
-        EVM_DIFFERENCES.map((d) => [d.area, d.ethereum, d.arc]),
+        EVM_DIFFERENCES.map((d) => [d.area, d.ethereum, d.arc])
       );
 
       log.newline();
       log.title("Developer Notes");
       console.log("  - Gas is denominated in USDC, display values in USD terms");
-      console.log("  - Multiple blocks may share timestamps, avoid strictly increasing assumptions");
+      console.log(
+        "  - Multiple blocks may share timestamps, avoid strictly increasing assumptions"
+      );
       console.log("  - block.prevrandao is always 0, use external oracle/VRF for randomness");
       console.log("  - Transactions finalize immediately, safe to act on single confirmation");
       console.log("  - SELFDESTRUCT restricted during deployment");
@@ -54,7 +54,7 @@ export function registerInfoCommand(program: Command): void {
         log.title(categoryNames[opts.category] || opts.category);
         table(
           ["Name", "URL", "Description"],
-          filteredProviders.map((p) => [p.name, p.url, p.description]),
+          filteredProviders.map((p) => [p.name, p.url, p.description])
         );
       } else {
         const grouped = new Map<string, typeof PROVIDERS>();
@@ -68,7 +68,7 @@ export function registerInfoCommand(program: Command): void {
           log.title(categoryNames[cat] || cat);
           table(
             ["Name", "URL", "Description"],
-            providers.map((p) => [p.name, p.url, p.description]),
+            providers.map((p) => [p.name, p.url, p.description])
           );
           log.newline();
         }
@@ -84,10 +84,12 @@ export function registerInfoCommand(program: Command): void {
       log.title("Compliance Vendors");
       table(
         ["Name", "URL", "Description"],
-        complianceProviders.map((p) => [p.name, p.url, p.description]),
+        complianceProviders.map((p) => [p.name, p.url, p.description])
       );
 
       log.newline();
-      log.dim("These providers offer analytics, wallet screening, and monitoring for regulatory compliance.");
+      log.dim(
+        "These providers offer analytics, wallet screening, and monitoring for regulatory compliance."
+      );
     });
 }

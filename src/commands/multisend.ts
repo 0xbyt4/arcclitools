@@ -49,8 +49,13 @@ export function registerMultisendCommand(program: Command): void {
     .description("Send USDC or ERC-20 tokens to multiple addresses from a file")
     .argument("<file>", "Text file with one wallet address per line (# for comments)")
     .argument("<amount>", "Amount to send to each address")
-    .option("-t, --token <token>", "Token to send: eurc, usyc, or contract address (default: native USDC)")
-    .addHelpText("after", `
+    .option(
+      "-t, --token <token>",
+      "Token to send: eurc, usyc, or contract address (default: native USDC)"
+    )
+    .addHelpText(
+      "after",
+      `
 Example wallets.txt:
   # My recipients
   0x1234...abcd
@@ -60,7 +65,8 @@ Usage:
   $ arc multisend wallets.txt 0.5
   $ arc multisend wallets.txt 100 --token eurc
   $ arc multisend wallets.txt 50 --token 0x1234...  (custom token)
-`)
+`
+    )
     .action(async (file: string, amount: string, opts: { token?: string }) => {
       if (!validateAmount(amount)) {
         log.error(`Invalid amount: ${amount}`);
@@ -101,7 +107,9 @@ Usage:
 
       for (let i = 0; i < addresses.length; i++) {
         const addr = addresses[i];
-        const s = spinner(`[${i + 1}/${addresses.length}] Sending ${amount} ${tokenName} to ${addr}...`);
+        const s = spinner(
+          `[${i + 1}/${addresses.length}] Sending ${amount} ${tokenName} to ${addr}...`
+        );
 
         try {
           let hash: `0x${string}`;
@@ -142,7 +150,7 @@ Usage:
           r.address,
           r.status,
           r.status === "Confirmed" ? r.hash : r.status,
-        ]),
+        ])
       );
 
       log.newline();

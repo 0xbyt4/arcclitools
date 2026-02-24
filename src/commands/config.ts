@@ -10,7 +10,7 @@ const KEY_MAP: Record<string, ConfigKey> = {
   "api-key": "apiKey",
   "entity-secret": "entitySecret",
   "rpc-url": "rpcUrl",
-  "network": "network",
+  network: "network",
   "private-key": "privateKey",
   "x402-port": "x402Port",
   "x402-price": "x402Price",
@@ -21,9 +21,7 @@ const SENSITIVE_KEYS: ConfigKey[] = ["apiKey", "entitySecret", "privateKey"];
 function resolveKey(key: string): ConfigKey {
   const resolved = KEY_MAP[key] || key;
   if (!CONFIG_KEYS.includes(resolved as (typeof CONFIG_KEYS)[number])) {
-    throw new Error(
-      `Unknown config key: ${key}\nValid keys: ${Object.keys(KEY_MAP).join(", ")}`,
-    );
+    throw new Error(`Unknown config key: ${key}\nValid keys: ${Object.keys(KEY_MAP).join(", ")}`);
   }
   return resolved as ConfigKey;
 }
@@ -36,9 +34,7 @@ function formatValue(key: ConfigKey, value: unknown): string {
 }
 
 export function registerConfigCommand(program: Command): void {
-  const config = program
-    .command("config")
-    .description("Manage CLI configuration");
+  const config = program.command("config").description("Manage CLI configuration");
 
   config
     .command("set <key> <value>")
@@ -89,7 +85,7 @@ export function registerConfigCommand(program: Command): void {
       log.title("Configuration");
       table(
         ["Key", "Value"],
-        entries.map(([k, v]) => [k, formatValue(k as ConfigKey, v)]),
+        entries.map(([k, v]) => [k, formatValue(k as ConfigKey, v)])
       );
       log.newline();
       log.dim(`Config path: ${getConfigPath()}`);

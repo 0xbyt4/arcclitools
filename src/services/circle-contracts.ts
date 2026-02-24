@@ -70,10 +70,7 @@ export async function deployContract(params: {
   return response.data;
 }
 
-export async function importContract(params: {
-  address: string;
-  name: string;
-}) {
+export async function importContract(params: { address: string; name: string }) {
   const client = getClient();
   const response = await client.importContract({
     blockchain: ARC_BLOCKCHAIN_ID,
@@ -102,10 +99,7 @@ export async function createEventMonitor(params: {
   return response.data;
 }
 
-export async function listEventLogs(params: {
-  contractAddress: string;
-  pageSize?: number;
-}) {
+export async function listEventLogs(params: { contractAddress: string; pageSize?: number }) {
   const client = getClient();
   const response = await client.listEventLogs({
     contractAddress: params.contractAddress,

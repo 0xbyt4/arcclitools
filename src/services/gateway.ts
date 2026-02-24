@@ -1,6 +1,6 @@
 import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
 import { requireApiKey, requireEntitySecret } from "../config/env.js";
-import { ARC_TESTNET, ARC_BLOCKCHAIN_ID } from "../config/constants.js";
+import { ARC_TESTNET } from "../config/constants.js";
 
 function getClient() {
   return initiateDeveloperControlledWalletsClient({
@@ -9,10 +9,7 @@ function getClient() {
   });
 }
 
-export async function depositToGateway(params: {
-  walletId: string;
-  amount: string;
-}) {
+export async function depositToGateway(params: { walletId: string; amount: string }) {
   const client = getClient();
   const response = await client.createContractExecutionTransaction({
     walletId: params.walletId,

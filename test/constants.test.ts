@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { ARC_TESTNET, NATIVE_USDC_DECIMALS, EVM_DIFFERENCES, PROVIDERS } from "../src/config/constants.js";
+import {
+  ARC_TESTNET,
+  NATIVE_USDC_DECIMALS,
+  EVM_DIFFERENCES,
+  PROVIDERS,
+} from "../src/config/constants.js";
 
 describe("ARC_TESTNET", () => {
   it("has correct chain ID", () => {

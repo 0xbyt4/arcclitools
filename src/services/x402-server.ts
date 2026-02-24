@@ -8,7 +8,10 @@ function buildRoutesConfig(config: X402ServerConfig): RoutesConfig {
   const network = `eip155:${ARC_TESTNET.chainId}` as const;
 
   if (config.routes && config.routes.length > 0) {
-    const routes: Record<string, { accepts: { scheme: string; payTo: string; price: string; network: string } }> = {};
+    const routes: Record<
+      string,
+      { accepts: { scheme: string; payTo: string; price: string; network: string } }
+    > = {};
     for (const route of config.routes) {
       routes[route.path] = {
         accepts: {
@@ -106,14 +109,15 @@ app.listen(PORT, () => {
 export function generateRoutesTemplate(routes: X402RouteConfig[]): string {
   return JSON.stringify(
     {
-      routes: routes.length > 0
-        ? routes
-        : [
-            { path: "/api/data", price: "0.01", description: "Access to data API" },
-            { path: "/api/premium", price: "0.05", description: "Premium API access" },
-          ],
+      routes:
+        routes.length > 0
+          ? routes
+          : [
+              { path: "/api/data", price: "0.01", description: "Access to data API" },
+              { path: "/api/premium", price: "0.05", description: "Premium API access" },
+            ],
     },
     null,
-    2,
+    2
   );
 }
