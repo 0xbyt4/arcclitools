@@ -1,0 +1,5 @@
+[profile.default]
+src = "src/contracts"
+out = "out"
+libs = ["lib"]
+test = "test/foundry"

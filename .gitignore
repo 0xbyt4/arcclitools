@@ -4,3 +4,7 @@ dist/
 *.tsbuildinfo
 deployments.json
 wallets.txt
+
+# Foundry
+cache/
+out/

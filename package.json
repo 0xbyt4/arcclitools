@@ -11,7 +11,9 @@
     "build": "tsc && mkdir -p dist/src/contracts && cp src/contracts/* dist/src/contracts/ 2>/dev/null || true",
     "dev": "tsx bin/arc-cli.ts",
     "prepublishOnly": "npm run build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "arc",
@@ -53,6 +55,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
   }
 }
