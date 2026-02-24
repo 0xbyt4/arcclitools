@@ -88,9 +88,7 @@ describe("createWallet", () => {
 
     await createWallet("ws-123");
 
-    expect(mockClient.createWallets).toHaveBeenCalledWith(
-      expect.objectContaining({ count: 1 })
-    );
+    expect(mockClient.createWallets).toHaveBeenCalledWith(expect.objectContaining({ count: 1 }));
   });
 
   it("returns undefined when no data", async () => {
@@ -127,9 +125,7 @@ describe("listWallets", () => {
 
     await listWallets(25);
 
-    expect(mockClient.listWallets).toHaveBeenCalledWith(
-      expect.objectContaining({ pageSize: 25 })
-    );
+    expect(mockClient.listWallets).toHaveBeenCalledWith(expect.objectContaining({ pageSize: 25 }));
   });
 
   it("returns undefined when no data", async () => {

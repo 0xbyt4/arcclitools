@@ -21,11 +21,7 @@ vi.mock("../src/config/env.js", () => ({
   requireEntitySecret: vi.fn(() => "test-entity-secret"),
 }));
 
-import {
-  getSupportedChains,
-  bridgeToArc,
-  bridgeFromArc,
-} from "../src/services/bridge.js";
+import { getSupportedChains, bridgeToArc, bridgeFromArc } from "../src/services/bridge.js";
 
 // --- getSupportedChains ---
 

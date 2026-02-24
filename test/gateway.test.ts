@@ -77,9 +77,9 @@ describe("depositToGateway", () => {
       new Error("Gateway deposit failed")
     );
 
-    await expect(
-      depositToGateway({ walletId: "w-1", amount: "100" })
-    ).rejects.toThrow("Gateway deposit failed");
+    await expect(depositToGateway({ walletId: "w-1", amount: "100" })).rejects.toThrow(
+      "Gateway deposit failed"
+    );
   });
 });
 
@@ -172,9 +172,7 @@ describe("getGatewayBalance", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("fetches token balances for wallet", async () => {
-    const balances = [
-      { token: { symbol: "USDC", name: "USD Coin" }, amount: "500.00" },
-    ];
+    const balances = [{ token: { symbol: "USDC", name: "USD Coin" }, amount: "500.00" }];
     mockClient.getWalletTokenBalance.mockResolvedValue({
       data: { tokenBalances: balances },
     });
