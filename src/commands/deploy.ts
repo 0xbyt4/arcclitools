@@ -4,11 +4,13 @@ import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
 import { log, table, spinner } from "../utils/logger.js";
-import { deployContract } from "../services/rpc.js";
+import { deployContract, callContract, waitForReceipt } from "../services/rpc.js";
 import { checkFoundryInstalled } from "../services/foundry.js";
 import { saveDeployment, loadDeployments, getDeployment, updateDeployment } from "../services/deployments.js";
 import { ARC_TESTNET } from "../config/constants.js";
 import { validateAddress } from "../utils/validator.js";
+import { uploadFileToPinata } from "../services/pinata.js";
+import { statSync } from "fs";
 import type { Abi } from "viem";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -42,6 +44,51 @@ function loadPrecompiledArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceC
   const sourceCode = existsSync(solPath) ? readFileSync(solPath, "utf-8") : "";
 
   return { abi: artifact.abi, bytecode, sourceCode };
+}
+
+function loadPrecompiledNFTArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceCode: string } {
+  const artifactPath = resolve(__dirname, "../contracts/SimpleNFT.json");
+  const artifact = JSON.parse(readFileSync(artifactPath, "utf-8"));
+  const bytecode = artifact.bytecode.startsWith("0x") ? artifact.bytecode : `0x${artifact.bytecode}`;
+
+  const solPath = resolve(__dirname, "../contracts/SimpleNFT.sol");
+  const sourceCode = existsSync(solPath) ? readFileSync(solPath, "utf-8") : "";
+
+  return { abi: artifact.abi, bytecode, sourceCode };
+}
+
+function loadNFTArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceCode: string; compiled: boolean } {
+  const solPath = resolve(__dirname, "../contracts/SimpleNFT.sol");
+
+  if (checkFoundryInstalled() && existsSync(solPath)) {
+    try {
+      const result = compileWithFoundry(solPath, "SimpleNFT");
+      return { ...result, compiled: true };
+    } catch {
+      // Fall back to precompiled
+    }
+  }
+
+  const result = loadPrecompiledNFTArtifact();
+  return { ...result, compiled: false };
+}
+
+function imageToDataURI(imagePath: string): string {
+  const data = readFileSync(imagePath);
+  const base64 = data.toString("base64");
+
+  const ext = imagePath.split(".").pop()?.toLowerCase();
+  const mimeTypes: Record<string, string> = {
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    svg: "image/svg+xml",
+    webp: "image/webp",
+  };
+
+  const mime = mimeTypes[ext || ""] || "image/png";
+  return `data:${mime};base64,${base64}`;
 }
 
 function loadTokenArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceCode: string; compiled: boolean } {
@@ -224,6 +271,206 @@ Verify on Blockscout with: arc deploy verify <address>
     });
 
   deploy
+    .command("nft")
+    .description("Deploy an ERC-721 NFT collection with on-chain metadata")
+    .argument("<name>", "Collection name")
+    .argument("<symbol>", "Collection symbol")
+    .argument("<supply>", "Max supply (e.g. 100)")
+    .option("--image <path>", "Image file (PNG, JPG, GIF, SVG, WebP)")
+    .option("--ipfs", "Upload image to IPFS via Pinata (recommended for images > 24KB)")
+    .option("--description <text>", "Collection description", "")
+    .option("--mint <quantity>", "Mint tokens to deployer after deploy")
+    .option("--sol <path>", "Custom Solidity file to deploy instead of default SimpleNFT")
+    .addHelpText("after", `
+Examples:
+  $ arc deploy nft MyNFT MNFT 100 --image ./logo.png
+  $ arc deploy nft MyNFT MNFT 100 --image ./art.png --ipfs
+  $ arc deploy nft MyNFT MNFT 100 --image ./art.png --description "My collection" --mint 10
+
+Without --ipfs: Image stored on-chain as base64 (max ~24KB).
+With --ipfs: Image uploaded to IPFS via Pinata (any size, requires PINATA_JWT in .env).
+`)
+    .action(async (name: string, symbol: string, supply: string, opts: { image?: string; ipfs?: boolean; description?: string; mint?: string; sol?: string }) => {
+      const supplyNum = Number(supply);
+      if (isNaN(supplyNum) || supplyNum <= 0) {
+        log.error(`Invalid supply: ${supply}`);
+        process.exitCode = 1;
+        return;
+      }
+
+      if (!opts.image) {
+        log.error("Image is required. Use --image <path>");
+        log.dim("Example: arc deploy nft MyNFT MNFT 100 --image ./logo.png");
+        process.exitCode = 1;
+        return;
+      }
+
+      const imagePath = resolve(process.cwd(), opts.image);
+      if (!existsSync(imagePath)) {
+        log.error(`Image not found: ${opts.image}`);
+        process.exitCode = 1;
+        return;
+      }
+
+      const fileSizeKB = statSync(imagePath).size / 1024;
+
+      log.title("Deploy ERC-721 NFT");
+      log.label("Name", name);
+      log.label("Symbol", symbol);
+      log.label("Max Supply", supply);
+      log.label("Image", `${opts.image} (${fileSizeKB.toFixed(1)} KB)`);
+      log.label("Storage", opts.ipfs ? "IPFS (Pinata)" : "On-chain (base64)");
+      if (opts.description) log.label("Description", opts.description);
+      log.newline();
+
+      // Warn if image is too large for on-chain
+      if (!opts.ipfs && fileSizeKB > 24) {
+        log.warn(`Image is ${fileSizeKB.toFixed(0)} KB - on-chain limit is ~24 KB.`);
+        log.warn("Deploy will likely fail. Use --ipfs flag to upload to IPFS instead.");
+        log.dim("Example: arc deploy nft MyNFT MNFT 100 --image ./art.png --ipfs");
+        log.newline();
+        process.exitCode = 1;
+        return;
+      }
+
+      const s = spinner(opts.ipfs ? "Uploading image to IPFS..." : "Encoding image...");
+      try {
+        let imageURI: string;
+
+        if (opts.ipfs) {
+          const result = await uploadFileToPinata(imagePath);
+          imageURI = result.uri;
+          s.succeed("Image uploaded to IPFS");
+          log.dim(`CID: ${result.cid}`);
+          log.dim(`Gateway: ${result.gatewayUrl}`);
+        } else {
+          imageURI = imageToDataURI(imagePath);
+          const imageSizeKB = (Buffer.byteLength(imageURI, "utf-8") / 1024).toFixed(1);
+          log.dim(`Image encoded: ${imageSizeKB} KB as data URI`);
+        }
+
+        let abi: Abi;
+        let bytecode: `0x${string}`;
+        let sourceCode: string;
+        let solFile = "SimpleNFT.sol";
+
+        if (opts.sol) {
+          const customPath = resolve(process.cwd(), opts.sol);
+          if (!existsSync(customPath)) {
+            s.fail("File not found");
+            log.error(`File not found: ${opts.sol}`);
+            process.exitCode = 1;
+            return;
+          }
+
+          if (!checkFoundryInstalled()) {
+            s.fail("Foundry required");
+            log.error("Foundry is required to compile custom .sol files.");
+            log.dim("Install with: curl -L https://foundry.paradigm.xyz | bash");
+            process.exitCode = 1;
+            return;
+          }
+
+          const contractName = opts.sol.replace(/\.sol$/, "").split("/").pop()!;
+          solFile = opts.sol;
+          s.text = `Compiling ${contractName}.sol...`;
+          ({ abi, bytecode, sourceCode } = compileWithFoundry(customPath, contractName));
+          log.info(`Compiled from: ${opts.sol}`);
+        } else {
+          s.text = "Compiling contract...";
+          const result = loadNFTArtifact();
+          abi = result.abi;
+          bytecode = result.bytecode;
+          sourceCode = result.sourceCode;
+
+          if (result.compiled) {
+            log.dim("Compiled SimpleNFT.sol with Foundry");
+          } else {
+            log.dim("Using pre-compiled bytecode (install Foundry to compile from source)");
+          }
+        }
+
+        s.text = "Deploying NFT contract...";
+        const description = opts.description || "";
+
+        const { hash, from, address } = await deployContract({
+          abi,
+          bytecode,
+          args: [name, symbol, imageURI, description, BigInt(supply)],
+        });
+
+        s.succeed("NFT contract deployed");
+        log.newline();
+
+        table(
+          ["Field", "Value"],
+          [
+            ["Collection", `${name} (${symbol})`],
+            ["Contract", address],
+            ["Deployer", from],
+            ["Max Supply", supply],
+            ["Tx Hash", hash],
+          ],
+        );
+
+        // Mint tokens if requested
+        if (opts.mint) {
+          const mintQty = Number(opts.mint);
+          if (isNaN(mintQty) || mintQty <= 0) {
+            log.warn(`Invalid mint quantity: ${opts.mint}`);
+          } else if (mintQty > supplyNum) {
+            log.warn(`Mint quantity (${mintQty}) exceeds max supply (${supply})`);
+          } else {
+            log.newline();
+            const ms = spinner(`Minting ${mintQty} NFTs to ${from}...`);
+            try {
+              const mintHash = await callContract({
+                address: address as `0x${string}`,
+                abi,
+                functionName: "mint",
+                args: [from as `0x${string}`, BigInt(mintQty)],
+              });
+              await waitForReceipt(mintHash);
+              ms.succeed(`Minted ${mintQty} NFTs to deployer`);
+              log.dim(`Mint tx: ${mintHash}`);
+            } catch (err) {
+              ms.fail("Minting failed");
+              log.error((err as Error).message);
+              log.dim(`You can mint later: call mint(address, quantity) on ${address}`);
+            }
+          }
+        }
+
+        // Save deployment info
+        saveDeployment({
+          name,
+          symbol,
+          address,
+          deployer: from,
+          txHash: hash,
+          supply,
+          decimals: 0,
+          network: "Arc Testnet",
+          solFile,
+          verified: false,
+          deployedAt: new Date().toISOString(),
+        });
+
+        log.newline();
+        log.success("Saved to deployments.json");
+        log.dim(`Explorer: ${ARC_TESTNET.explorer}/address/${address}`);
+        log.dim(`Verify: arc deploy verify ${address}`);
+        if (!opts.mint) {
+          log.dim(`Mint NFTs: call mint(address, quantity) on the contract`);
+        }
+      } catch (err) {
+        s.fail("Deployment failed");
+        log.error((err as Error).message);
+        process.exitCode = 1;
+      }
+    });
+
+  deploy
     .command("list")
     .description("List all deployed contracts")
     .action(() => {
@@ -281,8 +528,8 @@ Verify on Blockscout with: arc deploy verify <address>
         const solFile = deployment.solFile;
         let solPath: string;
 
-        if (solFile === "SimpleToken.sol") {
-          solPath = resolve(__dirname, "../contracts/SimpleToken.sol");
+        if (solFile === "SimpleToken.sol" || solFile === "SimpleNFT.sol") {
+          solPath = resolve(__dirname, `../contracts/${solFile}`);
         } else {
           solPath = resolve(process.cwd(), solFile);
         }

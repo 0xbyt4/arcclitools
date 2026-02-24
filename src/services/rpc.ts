@@ -213,6 +213,31 @@ export async function sendERC20(params: {
   return { hash, from: account.address };
 }
 
+export async function callContract(params: {
+  address: `0x${string}`;
+  abi: Abi;
+  functionName: string;
+  args?: unknown[];
+}): Promise<`0x${string}`> {
+  const wallet = getWalletClient();
+  const account = wallet.account!;
+
+  const data = encodeFunctionData({
+    abi: params.abi,
+    functionName: params.functionName,
+    args: params.args,
+  });
+
+  const hash = await wallet.sendTransaction({
+    account,
+    chain: arcTestnet,
+    to: params.address,
+    data,
+  });
+
+  return hash;
+}
+
 export async function deployContract(params: {
   abi: Abi;
   bytecode: `0x${string}`;

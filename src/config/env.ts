@@ -20,6 +20,23 @@ export function getPrivateKey(): string | undefined {
   return (getConfig("privateKey") as string) || process.env.PRIVATE_KEY;
 }
 
+export function getPinataJWT(): string | undefined {
+  return (getConfig("pinataJwt") as string) || process.env.PINATA_JWT;
+}
+
+export function requirePinataJWT(): string {
+  const jwt = getPinataJWT();
+  if (!jwt) {
+    throw new Error(
+      "Pinata JWT not found. Set it with:\n" +
+      "  arc config set pinata-jwt <your-jwt>\n" +
+      "  or set PINATA_JWT in .env\n\n" +
+      "Get your JWT at: https://app.pinata.cloud/developers/api-keys"
+    );
+  }
+  return jwt;
+}
+
 export function getX402Port(): number {
   const configPort = getConfig("x402Port");
   if (configPort) return Number(configPort);

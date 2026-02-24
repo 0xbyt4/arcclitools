@@ -183,4 +183,4 @@ export const PROVIDERS: ProviderInfo[] = [
   { name: "Blockscout", url: "https://testnet.arcscan.app", description: "Open-source explorer with contract verification and APIs", category: "explorer" },
 ];
 
-export const CONFIG_KEYS = ["apiKey", "entitySecret", "rpcUrl", "network", "privateKey", "x402Port", "x402Price"] as const;
+export const CONFIG_KEYS = ["apiKey", "entitySecret", "rpcUrl", "network", "privateKey", "x402Port", "x402Price", "pinataJwt"] as const;

@@ -23,6 +23,7 @@ export interface ConfigStore {
   privateKey?: string;
   x402Port?: number;
   x402Price?: string;
+  pinataJwt?: string;
 }
 
 export type ConfigKey = keyof ConfigStore;
