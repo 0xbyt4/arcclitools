@@ -154,9 +154,26 @@ const erc20Abi = [
   },
   {
     type: "function" as const,
+    name: "approve",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ type: "bool" }],
+    stateMutability: "nonpayable" as const,
+  },
+  {
+    type: "function" as const,
     name: "decimals",
     inputs: [],
     outputs: [{ type: "uint8" }],
+    stateMutability: "view" as const,
+  },
+  {
+    type: "function" as const,
+    name: "symbol",
+    inputs: [],
+    outputs: [{ type: "string" }],
     stateMutability: "view" as const,
   },
 ] as const;
@@ -266,4 +283,74 @@ export async function deployContract(params: {
   }
 
   return { hash, from: account.address, address: receipt.contractAddress };
+}
+
+export async function approveERC20(params: {
+  tokenAddress: `0x${string}`;
+  spender: `0x${string}`;
+  amount: bigint;
+}): Promise<`0x${string}`> {
+  const wallet = getWalletClient();
+  const account = wallet.account!;
+
+  const data = encodeFunctionData({
+    abi: erc20Abi,
+    functionName: "approve",
+    args: [params.spender, params.amount],
+  });
+
+  const hash = await wallet.sendTransaction({
+    account,
+    chain: arcTestnet,
+    to: params.tokenAddress,
+    data,
+  });
+
+  return hash;
+}
+
+export async function getTokenInfo(tokenAddress: `0x${string}`): Promise<{ symbol: string; decimals: number }> {
+  const client = getPublicClient();
+
+  const [symbol, decimals] = await Promise.all([
+    client.readContract({
+      address: tokenAddress,
+      abi: erc20Abi,
+      functionName: "symbol",
+    }),
+    client.readContract({
+      address: tokenAddress,
+      abi: erc20Abi,
+      functionName: "decimals",
+    }),
+  ]);
+
+  return { symbol: symbol as string, decimals: Number(decimals) };
+}
+
+export async function callContractWithValue(params: {
+  address: `0x${string}`;
+  abi: Abi;
+  functionName: string;
+  args?: unknown[];
+  value: bigint;
+}): Promise<`0x${string}`> {
+  const wallet = getWalletClient();
+  const account = wallet.account!;
+
+  const data = encodeFunctionData({
+    abi: params.abi,
+    functionName: params.functionName,
+    args: params.args,
+  });
+
+  const hash = await wallet.sendTransaction({
+    account,
+    chain: arcTestnet,
+    to: params.address,
+    data,
+    value: params.value,
+  });
+
+  return hash;
 }

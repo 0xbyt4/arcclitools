@@ -16,6 +16,7 @@ import { registerSendCommand } from "./commands/send.js";
 import { registerMultisendCommand } from "./commands/multisend.js";
 import { registerDeployCommand } from "./commands/deploy.js";
 import { registerMessageCommand } from "./commands/message.js";
+import { registerDexCommand } from "./commands/dex.js";
 
 export function createProgram(): Command {
   const program = new Command();
@@ -42,6 +43,7 @@ export function createProgram(): Command {
   registerAddressesCommand(program);
   registerInfoCommand(program);
   registerDocsCommand(program);
+  registerDexCommand(program);
 
   return program;
 }

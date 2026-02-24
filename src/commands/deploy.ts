@@ -73,6 +73,33 @@ function loadNFTArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceCode: str
   return { ...result, compiled: false };
 }
 
+function loadPrecompiledDEXArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceCode: string } {
+  const artifactPath = resolve(__dirname, "../contracts/SimpleDEX.json");
+  const artifact = JSON.parse(readFileSync(artifactPath, "utf-8"));
+  const bytecode = artifact.bytecode.startsWith("0x") ? artifact.bytecode : `0x${artifact.bytecode}`;
+
+  const solPath = resolve(__dirname, "../contracts/SimpleDEX.sol");
+  const sourceCode = existsSync(solPath) ? readFileSync(solPath, "utf-8") : "";
+
+  return { abi: artifact.abi, bytecode, sourceCode };
+}
+
+function loadDEXArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceCode: string; compiled: boolean } {
+  const solPath = resolve(__dirname, "../contracts/SimpleDEX.sol");
+
+  if (checkFoundryInstalled() && existsSync(solPath)) {
+    try {
+      const result = compileWithFoundry(solPath, "SimpleDEX");
+      return { ...result, compiled: true };
+    } catch {
+      // Fall back to precompiled
+    }
+  }
+
+  const result = loadPrecompiledDEXArtifact();
+  return { ...result, compiled: false };
+}
+
 function imageToDataURI(imagePath: string): string {
   const data = readFileSync(imagePath);
   const base64 = data.toString("base64");
@@ -471,6 +498,109 @@ With --ipfs: Image uploaded to IPFS via Pinata (any size, requires PINATA_JWT in
     });
 
   deploy
+    .command("dex")
+    .description("Deploy a SimpleDEX (AMM) contract")
+    .option("--sol <path>", "Custom Solidity file to deploy instead of default SimpleDEX")
+    .addHelpText("after", `
+Examples:
+  $ arc deploy dex
+  $ arc deploy dex --sol ./MyDEX.sol
+
+Deploys a constant product AMM (Uniswap V2 style).
+All pools are Native USDC / ERC-20 token pairs with 0.3% swap fee.
+After deploy, use: arc dex create-pool <token-address>
+`)
+    .action(async (opts: { sol?: string }) => {
+      log.title("Deploy SimpleDEX");
+      log.newline();
+
+      const s = spinner("Compiling contract...");
+      try {
+        let abi: Abi;
+        let bytecode: `0x${string}`;
+        let solFile = "SimpleDEX.sol";
+
+        if (opts.sol) {
+          const customPath = resolve(process.cwd(), opts.sol);
+          if (!existsSync(customPath)) {
+            s.fail("File not found");
+            log.error(`File not found: ${opts.sol}`);
+            process.exitCode = 1;
+            return;
+          }
+
+          if (!checkFoundryInstalled()) {
+            s.fail("Foundry required");
+            log.error("Foundry is required to compile custom .sol files.");
+            process.exitCode = 1;
+            return;
+          }
+
+          const contractName = opts.sol.replace(/\.sol$/, "").split("/").pop()!;
+          solFile = opts.sol;
+          s.text = `Compiling ${contractName}.sol...`;
+          ({ abi, bytecode } = compileWithFoundry(customPath, contractName));
+          log.info(`Compiled from: ${opts.sol}`);
+        } else {
+          const result = loadDEXArtifact();
+          abi = result.abi;
+          bytecode = result.bytecode;
+
+          if (result.compiled) {
+            log.dim("Compiled SimpleDEX.sol with Foundry");
+          } else {
+            log.dim("Using pre-compiled bytecode");
+          }
+        }
+
+        s.text = "Deploying DEX contract...";
+
+        const { hash, from, address } = await deployContract({
+          abi,
+          bytecode,
+        });
+
+        saveDeployment({
+          name: "SimpleDEX",
+          symbol: "DEX",
+          address,
+          deployer: from,
+          txHash: hash,
+          supply: "0",
+          decimals: 0,
+          network: "Arc Testnet",
+          solFile,
+          verified: false,
+          deployedAt: new Date().toISOString(),
+        });
+
+        s.succeed("DEX deployed");
+        log.newline();
+
+        table(
+          ["Field", "Value"],
+          [
+            ["Contract", "SimpleDEX (AMM)"],
+            ["Address", address],
+            ["Deployer", from],
+            ["Fee", "0.3%"],
+            ["Tx Hash", hash],
+          ],
+        );
+
+        log.newline();
+        log.success("Saved to deployments.json");
+        log.dim(`Explorer: ${ARC_TESTNET.explorer}/address/${address}`);
+        log.dim(`Verify: arc deploy verify ${address}`);
+        log.dim(`Create pool: arc dex create-pool <token-address> --dex ${address}`);
+      } catch (err) {
+        s.fail("Deployment failed");
+        log.error((err as Error).message);
+        process.exitCode = 1;
+      }
+    });
+
+  deploy
     .command("list")
     .description("List all deployed contracts")
     .action(() => {
@@ -528,7 +658,7 @@ With --ipfs: Image uploaded to IPFS via Pinata (any size, requires PINATA_JWT in
         const solFile = deployment.solFile;
         let solPath: string;
 
-        if (solFile === "SimpleToken.sol" || solFile === "SimpleNFT.sol") {
+        if (["SimpleToken.sol", "SimpleNFT.sol", "SimpleDEX.sol"].includes(solFile)) {
           solPath = resolve(__dirname, `../contracts/${solFile}`);
         } else {
           solPath = resolve(process.cwd(), solFile);
