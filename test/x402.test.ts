@@ -85,6 +85,52 @@ describe("generateServerTemplate", () => {
     expect(template).toContain('"/health"');
     expect(template).toContain("Access granted");
   });
+
+  it("uses raw eip155 format when provided", () => {
+    const template = generateServerTemplate({
+      port: 3000,
+      price: "0.01",
+      payTo: "0x1234567890123456789012345678901234567890",
+      network: "eip155:42161",
+    });
+
+    expect(template).toContain("eip155:42161");
+  });
+
+  it("throws for unknown network name", () => {
+    expect(() =>
+      generateServerTemplate({
+        port: 3000,
+        price: "0.01",
+        payTo: "0x1234567890123456789012345678901234567890",
+        network: "invalid-network",
+      })
+    ).toThrow("Unknown network: invalid-network");
+  });
+
+  it("defaults to arc testnet when no network specified", () => {
+    const template = generateServerTemplate({
+      port: 3000,
+      price: "0.01",
+      payTo: "0x1234567890123456789012345678901234567890",
+    });
+
+    expect(template).toContain("eip155:5042002");
+  });
+
+  it("resolves all known networks", () => {
+    const networks = ["base-sepolia", "base", "arc", "ethereum", "sepolia", "polygon", "avalanche"];
+    for (const network of networks) {
+      expect(() =>
+        generateServerTemplate({
+          port: 3000,
+          price: "0.01",
+          payTo: "0x1234567890123456789012345678901234567890",
+          network,
+        })
+      ).not.toThrow();
+    }
+  });
 });
 
 // --- generateRoutesTemplate ---
@@ -172,6 +218,61 @@ describe("createX402Server", () => {
 
   it("unknown route returns 404", async () => {
     const res = await fetch(`http://localhost:${port}/nonexistent`);
+    expect(res.status).toBe(404);
+  });
+});
+
+// --- createX402Server with custom routes ---
+
+describe("createX402Server with custom routes", () => {
+  let server: http.Server;
+  const port = 19404;
+
+  beforeAll(
+    () =>
+      new Promise<void>((resolve) => {
+        const app = createX402Server({
+          port,
+          price: "0.01",
+          payTo: "0x1234567890123456789012345678901234567890",
+          network: "base-sepolia",
+          routes: [
+            { path: "/api/data", price: "0.02", description: "Data endpoint" },
+            { path: "/api/premium", price: "0.10", description: "Premium" },
+          ],
+        });
+        server = app.listen(port, resolve);
+      })
+  );
+
+  afterAll(
+    () =>
+      new Promise<void>((resolve) => {
+        server.close(() => resolve());
+      })
+  );
+
+  it("custom route /api/data responds", async () => {
+    const res = await fetch(`http://localhost:${port}/api/data`);
+    // Either 200 (no facilitator check) or 402 (payment required)
+    // The route should be registered either way
+    expect([200, 402]).toContain(res.status);
+  });
+
+  it("custom route /api/premium responds", async () => {
+    const res = await fetch(`http://localhost:${port}/api/premium`);
+    expect([200, 402]).toContain(res.status);
+  });
+
+  it("health endpoint still works with custom routes", async () => {
+    const res = await fetch(`http://localhost:${port}/health`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe("ok");
+  });
+
+  it("default /protected is not registered when custom routes used", async () => {
+    const res = await fetch(`http://localhost:${port}/protected`);
     expect(res.status).toBe(404);
   });
 });

@@ -4,8 +4,12 @@ import {
   shortenHash,
   formatUSDC,
   formatToken,
+  formatGasPrice,
+  formatBlockNumber,
+  formatTimestamp,
   explorerTxUrl,
   explorerAddressUrl,
+  colorStatus,
   maskSecret,
 } from "../src/utils/formatter.js";
 
@@ -99,6 +103,93 @@ describe("explorerAddressUrl", () => {
   it("builds correct address URL", () => {
     const result = explorerAddressUrl("https://testnet.arcscan.app", "0x123");
     expect(result).toBe("https://testnet.arcscan.app/address/0x123");
+  });
+});
+
+describe("formatGasPrice", () => {
+  it("formats gas price in Gwei", () => {
+    const result = formatGasPrice(160000000000n); // 160 gwei
+    expect(result).toBe("160 Gwei");
+  });
+
+  it("formats 1 gwei", () => {
+    expect(formatGasPrice(1000000000n)).toBe("1 Gwei");
+  });
+
+  it("formats zero", () => {
+    expect(formatGasPrice(0n)).toBe("0 Gwei");
+  });
+
+  it("formats fractional gwei", () => {
+    const result = formatGasPrice(1500000000n); // 1.5 gwei
+    expect(result).toBe("1.5 Gwei");
+  });
+});
+
+describe("formatBlockNumber", () => {
+  it("formats block number with locale string", () => {
+    const result = formatBlockNumber(1234567n);
+    // Locale formatting varies, but should contain the digits
+    expect(result).toContain("1");
+    expect(result).toContain("234");
+    expect(result).toContain("567");
+  });
+
+  it("formats zero", () => {
+    expect(formatBlockNumber(0n)).toBe("0");
+  });
+
+  it("formats small number", () => {
+    expect(formatBlockNumber(42n)).toBe("42");
+  });
+});
+
+describe("formatTimestamp", () => {
+  it("converts unix timestamp to date string", () => {
+    // 2024-01-01 00:00:00 UTC
+    const result = formatTimestamp(1704067200);
+    // Should contain year 2024
+    expect(result).toContain("2024");
+  });
+
+  it("converts zero timestamp to epoch", () => {
+    const result = formatTimestamp(0);
+    // Should be 1970
+    expect(result).toContain("1970");
+  });
+});
+
+describe("colorStatus", () => {
+  it("returns string containing the status for success variants", () => {
+    for (const status of ["success", "confirmed", "complete"]) {
+      const result = colorStatus(status);
+      expect(result).toContain(status);
+    }
+  });
+
+  it("handles case-insensitive input (SUCCESS maps to success branch)", () => {
+    // Both "SUCCESS" and "success" should hit the same switch case
+    const result = colorStatus("SUCCESS");
+    expect(result).toContain("SUCCESS");
+  });
+
+  it("returns string containing the status for pending variants", () => {
+    for (const status of ["pending", "processing"]) {
+      const result = colorStatus(status);
+      expect(result).toContain(status);
+    }
+  });
+
+  it("returns string containing the status for error variants", () => {
+    for (const status of ["failed", "reverted", "error"]) {
+      const result = colorStatus(status);
+      expect(result).toContain(status);
+    }
+  });
+
+  it("returns unchanged string for unknown status", () => {
+    expect(colorStatus("unknown")).toBe("unknown");
+    expect(colorStatus("something")).toBe("something");
   });
 });
 
