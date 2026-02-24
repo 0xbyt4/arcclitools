@@ -1,28 +1,53 @@
 import { Command } from "commander";
 import { log, table, spinner } from "../utils/logger.js";
-import { promptText, promptAmount, promptAddress } from "../utils/prompts.js";
-import { requireValidAmount } from "../utils/validator.js";
+import { validateAmount } from "../utils/validator.js";
 import * as gateway from "../services/gateway.js";
 
 export function registerGatewayCommand(program: Command): void {
   const gw = program
     .command("gateway")
-    .description("Circle Gateway - unified crosschain USDC balance");
+    .description("Circle Gateway - unified crosschain USDC balance")
+    .addHelpText("after", `
+Requires Circle API credentials:
+  arc config set api-key <your-key>
+  arc config set entity-secret <your-secret>
+
+Gateway provides a unified USDC balance across multiple chains.
+Learn more: https://developers.circle.com/circle-mint/docs/gateway
+`);
 
   gw
     .command("deposit")
     .description("Deposit USDC into Gateway unified balance")
     .option("-w, --wallet-id <id>", "Circle wallet ID")
     .option("-a, --amount <amount>", "Amount to deposit")
-    .action(async (opts) => {
-      const walletId = opts.walletId || await promptText("Circle wallet ID:");
-      const amount = opts.amount || await promptAmount("Amount of USDC to deposit:");
+    .addHelpText("after", `
+Example:
+  $ arc gateway deposit -w wallet123 -a 100
+`)
+    .action(async (opts: { walletId?: string; amount?: string }) => {
+      if (!opts.walletId) {
+        log.error("Wallet ID required. Use -w <wallet-id>");
+        process.exitCode = 1;
+        return;
+      }
+      if (!opts.amount || !validateAmount(opts.amount)) {
+        log.error("Invalid or missing amount. Use -a <amount>");
+        process.exitCode = 1;
+        return;
+      }
 
-      requireValidAmount(amount);
+      log.title("Gateway Deposit");
+      log.label("Wallet", opts.walletId);
+      log.label("Amount", `${opts.amount} USDC`);
+      log.newline();
 
       const s = spinner("Depositing to Gateway...");
       try {
-        const result = await gateway.depositToGateway({ walletId, amount });
+        const result = await gateway.depositToGateway({
+          walletId: opts.walletId,
+          amount: opts.amount,
+        });
         s.succeed("Deposit initiated");
 
         if (result) {
@@ -33,7 +58,7 @@ export function registerGatewayCommand(program: Command): void {
             [
               ["Transaction ID", String(data.id || "")],
               ["State", String(data.state || "")],
-              ["Amount", `${amount} USDC`],
+              ["Amount", `${opts.amount} USDC`],
             ],
           );
         }
@@ -49,23 +74,48 @@ export function registerGatewayCommand(program: Command): void {
     .description("Transfer USDC via Gateway to another chain")
     .option("-w, --wallet-id <id>", "Circle wallet ID")
     .option("-t, --to <address>", "Destination address")
-    .option("-c, --chain <blockchain>", "Destination blockchain")
+    .option("-c, --chain <blockchain>", "Destination blockchain (e.g., ETH-SEPOLIA, BASE-SEPOLIA)")
     .option("-a, --amount <amount>", "Amount to transfer")
-    .action(async (opts) => {
-      const walletId = opts.walletId || await promptText("Circle wallet ID:");
-      const to = opts.to || await promptAddress("Destination address:");
-      const chain = opts.chain || await promptText("Destination blockchain (e.g., ETH-SEPOLIA):");
-      const amount = opts.amount || await promptAmount("Amount of USDC to transfer:");
+    .addHelpText("after", `
+Example:
+  $ arc gateway transfer -w wallet123 -t 0xDest... -c ETH-SEPOLIA -a 50
+`)
+    .action(async (opts: { walletId?: string; to?: string; chain?: string; amount?: string }) => {
+      if (!opts.walletId) {
+        log.error("Wallet ID required. Use -w <wallet-id>");
+        process.exitCode = 1;
+        return;
+      }
+      if (!opts.to) {
+        log.error("Destination address required. Use -t <address>");
+        process.exitCode = 1;
+        return;
+      }
+      if (!opts.chain) {
+        log.error("Destination chain required. Use -c <blockchain>");
+        process.exitCode = 1;
+        return;
+      }
+      if (!opts.amount || !validateAmount(opts.amount)) {
+        log.error("Invalid or missing amount. Use -a <amount>");
+        process.exitCode = 1;
+        return;
+      }
 
-      requireValidAmount(amount);
+      log.title("Gateway Transfer");
+      log.label("Wallet", opts.walletId);
+      log.label("To", opts.to);
+      log.label("Chain", opts.chain);
+      log.label("Amount", `${opts.amount} USDC`);
+      log.newline();
 
       const s = spinner("Transferring via Gateway...");
       try {
         const result = await gateway.transferViaGateway({
-          walletId,
-          destinationAddress: to,
-          destinationBlockchain: chain,
-          amount,
+          walletId: opts.walletId,
+          destinationAddress: opts.to,
+          destinationBlockchain: opts.chain,
+          amount: opts.amount,
         });
         s.succeed("Gateway transfer initiated");
 
@@ -77,9 +127,9 @@ export function registerGatewayCommand(program: Command): void {
             [
               ["Transaction ID", String(data.id || "")],
               ["State", String(data.state || "")],
-              ["To", to],
-              ["Chain", chain],
-              ["Amount", `${amount} USDC`],
+              ["To", opts.to],
+              ["Chain", opts.chain],
+              ["Amount", `${opts.amount} USDC`],
             ],
           );
         }
@@ -110,7 +160,8 @@ export function registerGatewayCommand(program: Command): void {
             ]),
           );
         } else {
-          log.warn("No balances found for this wallet");
+          log.warn("No balances found for this wallet.");
+          log.dim("Deposit first: arc gateway deposit -w <wallet-id> -a <amount>");
         }
       } catch (err) {
         s.fail("Failed to fetch balance");
