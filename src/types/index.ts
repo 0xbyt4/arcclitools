@@ -85,6 +85,7 @@ export interface X402ServerConfig {
   price: string;
   payTo: string;
   routes?: X402RouteConfig[];
+  network?: string;
 }
 
 export interface GasInfo {

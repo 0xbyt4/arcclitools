@@ -7,11 +7,14 @@ import {
   createX402Server,
   generateServerTemplate,
   generateRoutesTemplate,
+  X402_NETWORKS,
 } from "../services/x402-server.js";
 import { getX402Port, getX402Price } from "../config/env.js";
 import type { X402RouteConfig } from "../types/index.js";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
+
+const networkChoices = Object.keys(X402_NETWORKS).join(", ");
 
 export function registerX402Command(program: Command): void {
   const x402 = program.command("x402").description("x402 HTTP payment protocol");
@@ -23,6 +26,11 @@ export function registerX402Command(program: Command): void {
     .option("--price <amount>", "Default price per request (USDC)")
     .option("--pay-to <address>", "Payment recipient address")
     .option("--routes <file>", "Route configuration file (JSON)")
+    .option(
+      "-n, --network <network>",
+      `Network for x402 payments (${networkChoices})`,
+      "base-sepolia"
+    )
     .action(async (opts) => {
       const port = opts.port ? Number(opts.port) : getX402Port();
       const price = opts.price || getX402Price();
@@ -43,13 +51,20 @@ export function registerX402Command(program: Command): void {
         }
       }
 
-      const app = createX402Server({ port, price, payTo, routes });
+      const network = opts.network;
+      const app = createX402Server({ port, price, payTo, routes, network });
 
       app.listen(port, () => {
+        const networkInfo = X402_NETWORKS[network];
+        const networkLabel = networkInfo
+          ? `${networkInfo.name} (eip155:${networkInfo.chainId})`
+          : network;
+
         log.title("x402 Payment Server");
         log.label("Port", String(port));
         log.label("Price", `$${price} USDC per request`);
         log.label("Pay To", payTo);
+        log.label("Network", networkLabel);
         log.newline();
 
         if (routes && routes.length > 0) {
@@ -149,6 +164,11 @@ export function registerX402Command(program: Command): void {
     .command("init")
     .description("Initialize x402 config and templates in current directory")
     .option("--pay-to <address>", "Payment recipient address")
+    .option(
+      "-n, --network <network>",
+      `Network for x402 payments (${networkChoices})`,
+      "base-sepolia"
+    )
     .action(async (opts) => {
       const payTo = opts.payTo || (await promptAddress("Payment recipient address:"));
       requireValidAddress(payTo, "payment recipient");
@@ -164,6 +184,7 @@ export function registerX402Command(program: Command): void {
         port: getX402Port(),
         price: getX402Price(),
         payTo,
+        network: opts.network,
       });
 
       const routesTemplate = generateRoutesTemplate([]);

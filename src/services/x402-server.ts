@@ -1,16 +1,48 @@
 import express from "express";
-import { paymentMiddlewareFromConfig } from "@x402/express";
+import { paymentMiddlewareFromConfig, type SchemeRegistration } from "@x402/express";
+import { ExactEvmScheme } from "@x402/evm/exact/server";
 import type { RoutesConfig } from "@x402/core/server";
 import type { X402ServerConfig, X402RouteConfig } from "../types/index.js";
 import { ARC_TESTNET } from "../config/constants.js";
 
+// x402 facilitator supported networks
+export const X402_NETWORKS: Record<string, { name: string; chainId: number }> = {
+  "base-sepolia": { name: "Base Sepolia", chainId: 84532 },
+  base: { name: "Base", chainId: 8453 },
+  arc: { name: "Arc Testnet", chainId: ARC_TESTNET.chainId },
+  ethereum: { name: "Ethereum", chainId: 1 },
+  sepolia: { name: "Sepolia", chainId: 11155111 },
+  polygon: { name: "Polygon", chainId: 137 },
+  avalanche: { name: "Avalanche", chainId: 43114 },
+};
+
+function resolveNetwork(config: X402ServerConfig): `${string}:${string}` {
+  if (config.network) {
+    const known = X402_NETWORKS[config.network];
+    if (known) return `eip155:${known.chainId}` as `${string}:${string}`;
+    // Allow raw eip155:XXXX format
+    if (config.network.startsWith("eip155:")) return config.network as `${string}:${string}`;
+    throw new Error(
+      `Unknown network: ${config.network}. Use: ${Object.keys(X402_NETWORKS).join(", ")} or eip155:<chainId>`
+    );
+  }
+  return `eip155:${ARC_TESTNET.chainId}` as `${string}:${string}`;
+}
+
 function buildRoutesConfig(config: X402ServerConfig): RoutesConfig {
-  const network = `eip155:${ARC_TESTNET.chainId}` as const;
+  const network = resolveNetwork(config);
 
   if (config.routes && config.routes.length > 0) {
     const routes: Record<
       string,
-      { accepts: { scheme: string; payTo: string; price: string; network: string } }
+      {
+        accepts: {
+          scheme: string;
+          payTo: string;
+          price: string;
+          network: `${string}:${string}`;
+        };
+      }
     > = {};
     for (const route of config.routes) {
       routes[route.path] = {
@@ -22,7 +54,7 @@ function buildRoutesConfig(config: X402ServerConfig): RoutesConfig {
         },
       };
     }
-    return routes as unknown as RoutesConfig;
+    return routes as RoutesConfig;
   }
 
   return {
@@ -34,7 +66,7 @@ function buildRoutesConfig(config: X402ServerConfig): RoutesConfig {
         network,
       },
     },
-  } as unknown as RoutesConfig;
+  } as RoutesConfig;
 }
 
 export function createX402Server(config: X402ServerConfig) {
@@ -42,8 +74,19 @@ export function createX402Server(config: X402ServerConfig) {
   app.use(express.json());
 
   const routesConfig = buildRoutesConfig(config);
+  const network = resolveNetwork(config);
 
-  app.use(paymentMiddlewareFromConfig(routesConfig));
+  // Register EVM "exact" scheme for the target network
+  const schemes: SchemeRegistration[] = [
+    {
+      network,
+      server: new ExactEvmScheme(),
+    },
+  ];
+
+  // paymentMiddlewareFromConfig uses the public x402.org facilitator by default
+  // Syncs with facilitator on first request to check supported schemes/networks
+  app.use(paymentMiddlewareFromConfig(routesConfig, undefined, schemes));
 
   if (config.routes && config.routes.length > 0) {
     for (const route of config.routes) {
@@ -64,18 +107,22 @@ export function createX402Server(config: X402ServerConfig) {
   }
 
   app.get("/health", (_req, res) => {
-    res.json({ status: "ok", x402: true });
+    res.json({ status: "ok", x402: true, network });
   });
 
   return app;
 }
 
 export function generateServerTemplate(config: X402ServerConfig): string {
+  const network = resolveNetwork(config);
   return `import express from "express";
 import { paymentMiddlewareFromConfig } from "@x402/express";
+import { ExactEvmScheme } from "@x402/evm/exact/server";
 
 const app = express();
 app.use(express.json());
+
+const network = "${network}";
 
 const routes = {
   "/protected": {
@@ -83,12 +130,14 @@ const routes = {
       scheme: "exact",
       payTo: "${config.payTo}",
       price: "${config.price}",
-      network: "eip155:${ARC_TESTNET.chainId}",
+      network,
     },
   },
 };
 
-app.use(paymentMiddlewareFromConfig(routes));
+const schemes = [{ network, server: new ExactEvmScheme() }];
+
+app.use(paymentMiddlewareFromConfig(routes, undefined, schemes, undefined, undefined, false));
 
 app.get("/protected", (_req, res) => {
   res.json({ message: "Access granted", timestamp: new Date().toISOString() });
