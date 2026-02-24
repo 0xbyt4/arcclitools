@@ -12,6 +12,9 @@ import { registerExploreCommand } from "./commands/explore.js";
 import { registerAddressesCommand } from "./commands/addresses.js";
 import { registerInfoCommand } from "./commands/info.js";
 import { registerDocsCommand } from "./commands/docs.js";
+import { registerSendCommand } from "./commands/send.js";
+import { registerMultisendCommand } from "./commands/multisend.js";
+import { registerDeployCommand } from "./commands/deploy.js";
 
 export function createProgram(): Command {
   const program = new Command();
@@ -24,6 +27,9 @@ export function createProgram(): Command {
   registerConfigCommand(program);
   registerNetworkCommand(program);
   registerWalletCommand(program);
+  registerSendCommand(program);
+  registerMultisendCommand(program);
+  registerDeployCommand(program);
   registerTransferCommand(program);
   registerBridgeCommand(program);
   registerGatewayCommand(program);

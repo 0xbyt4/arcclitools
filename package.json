@@ -8,7 +8,7 @@
     "arc": "./dist/bin/arc-cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && mkdir -p dist/src/contracts && cp src/contracts/* dist/src/contracts/ 2>/dev/null || true",
     "dev": "tsx bin/arc-cli.ts",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit"

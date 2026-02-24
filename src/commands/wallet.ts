@@ -1,4 +1,6 @@
 import { Command } from "commander";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { resolve } from "path";
 import { log, table, spinner } from "../utils/logger.js";
 import { formatUSDC, formatToken, shortenAddress } from "../utils/formatter.js";
 import { promptText, promptConfirm } from "../utils/prompts.js";
@@ -7,6 +9,46 @@ import * as circleWallets from "../services/circle-wallets.js";
 import { getBalance, readContract } from "../services/rpc.js";
 import { ARC_TESTNET, NATIVE_USDC_DECIMALS } from "../config/constants.js";
 import { castWalletNew, checkFoundryInstalled } from "../services/foundry.js";
+
+function getWalletAddressFromEnv(): string | undefined {
+  const envPath = resolve(process.cwd(), ".env");
+  if (!existsSync(envPath)) return undefined;
+  const match = readFileSync(envPath, "utf-8").match(/^WALLET_ADDRESS=(.+)$/m);
+  return match?.[1]?.trim();
+}
+
+function backupAndWriteEnv(address: string, privateKey: string): { backedUp: boolean } {
+  const envPath = resolve(process.cwd(), ".env");
+  const timestamp = new Date().toISOString().replace("T", " ").slice(0, 19);
+  let backedUp = false;
+
+  if (existsSync(envPath)) {
+    const lines = readFileSync(envPath, "utf-8").split("\n");
+    const newLines: string[] = [];
+
+    for (const line of lines) {
+      if (/^PRIVATE_KEY=/.test(line)) {
+        newLines.push(`# Backup (${timestamp})`);
+        newLines.push(`# ${line}`);
+        backedUp = true;
+      } else if (/^WALLET_ADDRESS=/.test(line)) {
+        newLines.push(`# ${line}`);
+      } else {
+        newLines.push(line);
+      }
+    }
+
+    newLines.push(`PRIVATE_KEY=${privateKey}`);
+    newLines.push(`WALLET_ADDRESS=${address}`);
+    newLines.push("");
+
+    writeFileSync(envPath, newLines.join("\n"));
+  } else {
+    writeFileSync(envPath, `PRIVATE_KEY=${privateKey}\nWALLET_ADDRESS=${address}\n`);
+  }
+
+  return { backedUp };
+}
 
 export function registerWalletCommand(program: Command): void {
   const wallet = program
@@ -51,8 +93,9 @@ export function registerWalletCommand(program: Command): void {
 
   wallet
     .command("generate")
-    .description("Generate a local EOA keypair (requires Foundry)")
-    .action(() => {
+    .description("Generate a local EOA keypair and save to .env")
+    .option("--no-save", "Do not save to .env file")
+    .action((opts) => {
       if (!checkFoundryInstalled()) {
         log.error("Foundry not installed. Install with: curl -L https://foundry.paradigm.xyz | bash");
         process.exitCode = 1;
@@ -61,8 +104,30 @@ export function registerWalletCommand(program: Command): void {
 
       try {
         const output = castWalletNew();
+
+        const addressMatch = output.match(/Address:\s+(0x[a-fA-F0-9]{40})/);
+        const keyMatch = output.match(/Private key:\s+(0x[a-fA-F0-9]{64})/);
+
+        if (!addressMatch || !keyMatch) {
+          throw new Error("Failed to parse wallet output");
+        }
+
+        const address = addressMatch[1];
+        const privateKey = keyMatch[1];
+
         log.title("New EOA Wallet");
-        console.log(output);
+        log.label("Address", address);
+        log.label("Private Key", privateKey);
+
+        if (opts.save) {
+          const { backedUp } = backupAndWriteEnv(address, privateKey);
+          log.newline();
+          if (backedUp) {
+            log.info("Previous wallet backed up in .env");
+          }
+          log.success("Saved to .env (PRIVATE_KEY, WALLET_ADDRESS)");
+        }
+
         log.newline();
         log.warn("Save your private key securely. It will not be shown again.");
         log.dim(`Fund your wallet at: ${ARC_TESTNET.faucet}`);
@@ -109,7 +174,12 @@ export function registerWalletCommand(program: Command): void {
     .argument("[address]", "Wallet address to check")
     .action(async (address?: string) => {
       if (!address) {
-        address = await promptText("Enter wallet address:");
+        address = getWalletAddressFromEnv();
+        if (address) {
+          log.dim(`Using wallet from .env: ${address}`);
+        } else {
+          address = await promptText("Enter wallet address:");
+        }
       }
 
       if (!validateAddress(address)) {
@@ -175,7 +245,12 @@ export function registerWalletCommand(program: Command): void {
     .option("--browser", "Open faucet in browser instead of API call")
     .action(async (address: string | undefined, opts) => {
       if (!address) {
-        address = await promptText("Enter wallet address to fund:");
+        address = getWalletAddressFromEnv();
+        if (address) {
+          log.dim(`Using wallet from .env: ${address}`);
+        } else {
+          address = await promptText("Enter wallet address to fund:");
+        }
       }
 
       if (!validateAddress(address)) {
