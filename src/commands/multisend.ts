@@ -47,9 +47,20 @@ export function registerMultisendCommand(program: Command): void {
   program
     .command("multisend")
     .description("Send USDC or ERC-20 tokens to multiple addresses from a file")
-    .argument("<file>", "File with wallet addresses (one per line)")
+    .argument("<file>", "Text file with one wallet address per line (# for comments)")
     .argument("<amount>", "Amount to send to each address")
     .option("-t, --token <token>", "Token to send: eurc, usyc, or contract address (default: native USDC)")
+    .addHelpText("after", `
+Example wallets.txt:
+  # My recipients
+  0x1234...abcd
+  0x5678...efgh
+
+Usage:
+  $ arc multisend wallets.txt 0.5
+  $ arc multisend wallets.txt 100 --token eurc
+  $ arc multisend wallets.txt 50 --token 0x1234...  (custom token)
+`)
     .action(async (file: string, amount: string, opts: { token?: string }) => {
       if (!validateAmount(amount)) {
         log.error(`Invalid amount: ${amount}`);

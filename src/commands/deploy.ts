@@ -109,6 +109,14 @@ export function registerDeployCommand(program: Command): void {
     .argument("<symbol>", "Token symbol")
     .argument("<supply>", "Initial supply (whole tokens, e.g. 1000000)")
     .option("--sol <path>", "Custom Solidity file to deploy instead of default SimpleToken")
+    .addHelpText("after", `
+Examples:
+  $ arc deploy token MyToken MTK 1000000
+  $ arc deploy token MyToken MTK 1000000 --sol ./MyToken.sol
+
+Deployment info is saved to deployments.json (auto-created).
+Verify on Blockscout with: arc deploy verify <address>
+`)
     .action(async (name: string, symbol: string, supply: string, opts: { sol?: string }) => {
       const supplyNum = Number(supply);
       if (isNaN(supplyNum) || supplyNum <= 0) {
