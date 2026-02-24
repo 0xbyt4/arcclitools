@@ -1,0 +1,50 @@
+name: Nightly
+
+on:
+  schedule:
+    # Every day at 03:00 UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  full-suite:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: foundry-rs/foundry-toolchain@v1
+
+      - run: npm ci
+
+      # TypeScript
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Vitest
+        run: npm test
+
+      # Solidity
+      - name: Forge test
+        run: forge test -vvv
+
+      - name: Forge gas report
+        run: forge test --gas-report
+
+      # Build
+      - name: Build
+        run: npm run build
+
+      # CLI smoke test
+      - name: CLI --help
+        run: node dist/bin/arc-cli.js --help
+
+      - name: CLI version
+        run: node dist/bin/arc-cli.js --version
