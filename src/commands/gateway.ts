@@ -1,0 +1,121 @@
+import { Command } from "commander";
+import { log, table, spinner } from "../utils/logger.js";
+import { promptText, promptAmount, promptAddress } from "../utils/prompts.js";
+import { requireValidAmount } from "../utils/validator.js";
+import * as gateway from "../services/gateway.js";
+
+export function registerGatewayCommand(program: Command): void {
+  const gw = program
+    .command("gateway")
+    .description("Circle Gateway - unified crosschain USDC balance");
+
+  gw
+    .command("deposit")
+    .description("Deposit USDC into Gateway unified balance")
+    .option("-w, --wallet-id <id>", "Circle wallet ID")
+    .option("-a, --amount <amount>", "Amount to deposit")
+    .action(async (opts) => {
+      const walletId = opts.walletId || await promptText("Circle wallet ID:");
+      const amount = opts.amount || await promptAmount("Amount of USDC to deposit:");
+
+      requireValidAmount(amount);
+
+      const s = spinner("Depositing to Gateway...");
+      try {
+        const result = await gateway.depositToGateway({ walletId, amount });
+        s.succeed("Deposit initiated");
+
+        if (result) {
+          const data = result as unknown as Record<string, unknown>;
+          log.newline();
+          table(
+            ["Field", "Value"],
+            [
+              ["Transaction ID", String(data.id || "")],
+              ["State", String(data.state || "")],
+              ["Amount", `${amount} USDC`],
+            ],
+          );
+        }
+      } catch (err) {
+        s.fail("Deposit failed");
+        log.error((err as Error).message);
+        process.exitCode = 1;
+      }
+    });
+
+  gw
+    .command("transfer")
+    .description("Transfer USDC via Gateway to another chain")
+    .option("-w, --wallet-id <id>", "Circle wallet ID")
+    .option("-t, --to <address>", "Destination address")
+    .option("-c, --chain <blockchain>", "Destination blockchain")
+    .option("-a, --amount <amount>", "Amount to transfer")
+    .action(async (opts) => {
+      const walletId = opts.walletId || await promptText("Circle wallet ID:");
+      const to = opts.to || await promptAddress("Destination address:");
+      const chain = opts.chain || await promptText("Destination blockchain (e.g., ETH-SEPOLIA):");
+      const amount = opts.amount || await promptAmount("Amount of USDC to transfer:");
+
+      requireValidAmount(amount);
+
+      const s = spinner("Transferring via Gateway...");
+      try {
+        const result = await gateway.transferViaGateway({
+          walletId,
+          destinationAddress: to,
+          destinationBlockchain: chain,
+          amount,
+        });
+        s.succeed("Gateway transfer initiated");
+
+        if (result) {
+          const data = result as unknown as Record<string, unknown>;
+          log.newline();
+          table(
+            ["Field", "Value"],
+            [
+              ["Transaction ID", String(data.id || "")],
+              ["State", String(data.state || "")],
+              ["To", to],
+              ["Chain", chain],
+              ["Amount", `${amount} USDC`],
+            ],
+          );
+        }
+      } catch (err) {
+        s.fail("Transfer failed");
+        log.error((err as Error).message);
+        process.exitCode = 1;
+      }
+    });
+
+  gw
+    .command("balance")
+    .description("Check Gateway unified balance")
+    .argument("<walletId>", "Circle wallet ID")
+    .action(async (walletId: string) => {
+      const s = spinner("Fetching Gateway balance...");
+      try {
+        const balances = await gateway.getGatewayBalance(walletId);
+        s.succeed("Balance fetched");
+
+        if (balances && balances.length > 0) {
+          log.newline();
+          table(
+            ["Token", "Amount"],
+            balances.map((b) => [
+              String(b.token?.symbol || b.token?.name || "Unknown"),
+              String(b.amount || "0"),
+            ]),
+          );
+        } else {
+          log.warn("No balances found for this wallet");
+        }
+      } catch (err) {
+        s.fail("Failed to fetch balance");
+        log.error((err as Error).message);
+        process.exitCode = 1;
+      }
+    });
+}
