@@ -5,6 +5,7 @@ import {
   formatGwei,
   formatUnits,
   parseUnits,
+  parseAbi,
   encodeDeployData,
   encodeFunctionData,
   defineChain,
@@ -17,6 +18,8 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { getRpcUrl, requirePrivateKey } from "../config/env.js";
 import { ARC_TESTNET, NATIVE_USDC_DECIMALS, ERC20_ABI } from "../config/constants.js";
+
+const erc20Abi = parseAbi(ERC20_ABI as readonly string[]);
 
 export const arcTestnet: Chain = defineChain({
   id: ARC_TESTNET.chainId,
@@ -179,14 +182,14 @@ export async function sendERC20(params: {
     params.decimals ??
     ((await client.readContract({
       address: params.tokenAddress,
-      abi: ERC20_ABI,
+      abi: erc20Abi,
       functionName: "decimals",
     })) as number);
 
   const value = parseUnits(params.amount, decimals);
 
   const data = encodeFunctionData({
-    abi: ERC20_ABI,
+    abi: erc20Abi,
     functionName: "transfer",
     args: [params.to, value],
   });
@@ -265,7 +268,7 @@ export async function approveERC20(params: {
   const account = wallet.account!;
 
   const data = encodeFunctionData({
-    abi: ERC20_ABI,
+    abi: erc20Abi,
     functionName: "approve",
     args: [params.spender, params.amount],
   });
@@ -288,12 +291,12 @@ export async function getTokenInfo(
   const [symbol, decimals] = await Promise.all([
     client.readContract({
       address: tokenAddress,
-      abi: ERC20_ABI,
+      abi: erc20Abi,
       functionName: "symbol",
     }),
     client.readContract({
       address: tokenAddress,
-      abi: ERC20_ABI,
+      abi: erc20Abi,
       functionName: "decimals",
     }),
   ]);

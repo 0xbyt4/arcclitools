@@ -20,6 +20,8 @@ import { registerMultisendCommand } from "./commands/multisend.js";
 import { registerDeployCommand } from "./commands/deploy.js";
 import { registerMessageCommand } from "./commands/message.js";
 import { registerDexCommand } from "./commands/dex.js";
+import { registerUsycCommand } from "./commands/usyc.js";
+import { registerFxCommand } from "./commands/fx.js";
 
 function findPackageJson(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
@@ -61,6 +63,8 @@ export function createProgram(): Command {
   registerInfoCommand(program);
   registerDocsCommand(program);
   registerDexCommand(program);
+  registerUsycCommand(program);
+  registerFxCommand(program);
 
   return program;
 }

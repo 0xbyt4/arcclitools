@@ -8,6 +8,9 @@ import { validateAddress } from "../utils/validator.js";
 import * as circleWallets from "../services/circle-wallets.js";
 import { getBalance, readContract } from "../services/rpc.js";
 import { ARC_TESTNET, NATIVE_USDC_DECIMALS, ERC20_ABI } from "../config/constants.js";
+import { parseAbi } from "viem";
+
+const erc20Abi = parseAbi(ERC20_ABI as readonly string[]);
 import { castWalletNew, checkFoundryInstalled } from "../services/foundry.js";
 
 function getWalletAddressFromEnv(): string | undefined {
@@ -198,13 +201,13 @@ export function registerWalletCommand(program: Command): void {
         const results = await Promise.allSettled([
           readContract({
             address: ARC_TESTNET.contracts.EURC.address as `0x${string}`,
-            abi: ERC20_ABI,
+            abi: erc20Abi as unknown as readonly unknown[],
             functionName: "balanceOf",
             args: [addr],
           }),
           readContract({
             address: ARC_TESTNET.contracts.USYC.address as `0x${string}`,
-            abi: ERC20_ABI,
+            abi: erc20Abi as unknown as readonly unknown[],
             functionName: "balanceOf",
             args: [addr],
           }),

@@ -263,6 +263,88 @@ export const PROVIDERS: ProviderInfo[] = [
   },
 ];
 
+export const USYC_TELLER_ABI = [
+  // ERC-4626 Core
+  "function asset() view returns (address)",
+  "function share() view returns (address)",
+  "function totalAssets() view returns (uint256)",
+  "function convertToShares(uint256 assets) view returns (uint256)",
+  "function convertToAssets(uint256 shares) view returns (uint256)",
+  "function previewDeposit(uint256 assets) view returns (uint256)",
+  "function previewMint(uint256 shares) view returns (uint256)",
+  "function previewRedeem(uint256 shares) view returns (uint256)",
+  "function previewWithdraw(uint256 assets) view returns (uint256)",
+  "function maxDeposit(address receiver) view returns (uint256)",
+  "function maxMint(address receiver) view returns (uint256)",
+  "function maxRedeem(address owner) view returns (uint256)",
+  "function maxWithdraw(address owner) view returns (uint256)",
+  "function deposit(uint256 assets, address receiver) returns (uint256)",
+  "function mint(uint256 shares, address receiver) returns (uint256)",
+  "function redeem(uint256 shares, address receiver, address owner) returns (uint256)",
+  "function withdraw(uint256 assets, address receiver, address owner) returns (uint256)",
+  "function depositWithPermit(uint256 assets, address receiver, uint256 deadline, uint8 v, bytes32 r, bytes32 s) returns (uint256)",
+  // ERC-20 interface on share token
+  "function balanceOf(address account) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+  // Hashnote-specific
+  "function oracle() view returns (address)",
+  "function mintPrice() view returns (uint256)",
+  "function todayTimestamp() view returns (uint256)",
+  "function afterHourTrading() view returns (uint256)",
+  "function isDST() view returns (bool)",
+  "function authority() view returns (address)",
+  "function owner() view returns (address)",
+  "function treasury(address account) view returns (address)",
+  "function limit(address account) view returns (uint256)",
+  // Events
+  "event Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares)",
+  "event Withdraw(address indexed sender, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)",
+] as const;
+
+export const ENTITLEMENTS_ABI = [
+  "function canCall(address caller, address target, bytes4 functionSig) view returns (bool)",
+  "function getUserRoles(address user) view returns (bytes32)",
+  "function doesUserHaveRole(address user, uint8 role) view returns (bool)",
+  "function isCapabilityPublic(address target, bytes4 functionSig) view returns (bool)",
+  "function getRolesWithCapability(address target, bytes4 functionSig) view returns (bytes32)",
+  "function doesRoleHaveCapability(uint8 role, address target, bytes4 functionSig) view returns (bool)",
+  "function paused() view returns (bool)",
+  "function owner() view returns (address)",
+] as const;
+
+export const FX_ESCROW_ABI = [
+  // Read
+  "function lastTradeId() view returns (uint256)",
+  "function permit2() view returns (address)",
+  "function owner() view returns (address)",
+  "function relayers(address account) view returns (bool)",
+  "function eip712Domain() view returns (bytes1 fields, string name, string version, uint256 chainId, address verifyingContract, bytes32 salt, uint256[] extensions)",
+  "function getTradeDetails(uint256 tradeId) view returns (address baseToken, address quoteToken, address maker, address taker, address makerSigner, uint256 baseAmount, uint256 quoteAmount, uint256 makerFee, uint256 takerFee, uint256 makerDelivered, uint256 takerDelivered, uint256 expiryDate, uint8 status, uint8 makerFundingStatus, uint8 takerFundingStatus)",
+  "function getMakerTotalBaseBalances(uint256[] tradeIds) view returns (uint256[])",
+  "function getTakerTotalQuoteBalances(uint256[] tradeIds) view returns (uint256[])",
+  "function getMakerNetBalances(uint256[] tradeIds) view returns (uint256[])",
+  // Write
+  "function makerDeliver(uint256 tradeId, ((address token, uint256 amount) tokenPermission, uint256 nonce, uint256 deadline) details, bytes signature)",
+  "function takerDeliver(uint256 tradeId, ((address token, uint256 amount) tokenPermission, uint256 nonce, uint256 deadline) details, bytes signature)",
+  "function breach(uint256 tradeId)",
+  "function batchBreach(uint256[] tradeIds)",
+] as const;
+
+export const TRADE_STATUS_LABELS: Record<number, string> = {
+  0: "Created",
+  1: "Active",
+  2: "Settled",
+  3: "Breached",
+  4: "Expired",
+};
+
+export const FUNDING_STATUS_LABELS: Record<number, string> = {
+  0: "Pending",
+  1: "Partial",
+  2: "Delivered",
+};
+
 export const CONFIG_KEYS = [
   "apiKey",
   "entitySecret",
