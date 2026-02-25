@@ -1,7 +1,6 @@
 import { Command } from "commander";
 import { log, table, spinner } from "../utils/logger.js";
-import { readContract, getWalletClient, callContract, waitForReceipt } from "../services/rpc.js";
-import { validateAmount } from "../utils/validator.js";
+import { readContract, callContract, waitForReceipt } from "../services/rpc.js";
 import {
   ARC_TESTNET,
   ERC20_USDC_DECIMALS,
@@ -48,11 +47,6 @@ function resolveTokenSymbol(address: string): string {
   if (normalized === usdc) return "USDC";
   if (normalized === eurc) return "EURC";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
-function formatTradeAmount(amount: bigint, tokenAddr: string): string {
-  const symbol = resolveTokenSymbol(tokenAddr);
-  return `${formatUnits(amount, ERC20_USDC_DECIMALS)} ${symbol}`;
 }
 
 function parseTrade(result: unknown): TradeDetails {

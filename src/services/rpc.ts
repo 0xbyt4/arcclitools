@@ -46,7 +46,7 @@ function buildTransport() {
   for (const url of ALTERNATIVE_RPCS) {
     if (url !== primaryUrl) transports.push(http(url));
   }
-  return fallback(transports, { rank: true });
+  return fallback(transports);
 }
 
 export function getPublicClient(): PublicClient<Transport, Chain> {
