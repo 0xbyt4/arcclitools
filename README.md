@@ -69,6 +69,7 @@ arc config set rpc-url <value>
 arc config set private-key <value>
 arc config set x402-port <value>
 arc config set x402-price <value>
+arc config set pinata-jwt <value>
 
 # View config
 arc config get <key>
@@ -113,8 +114,9 @@ arc wallet fund [addr]    # Request testnet tokens from faucet
 arc send <amount> <recipient>              # Send USDC
 arc send <amount> <recipient> --token eurc # Send EURC
 
-# Batch send from file
-arc multisend <file> --token usdc
+# Batch send from file (amount per recipient)
+arc multisend <file> <amount>
+arc multisend wallets.txt 100 --token eurc
 
 # Transfer via Circle wallets
 arc transfer usdc -f <from> -t <to> -a <amount>
@@ -137,26 +139,30 @@ Supported chains: Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, Avalanche Fu
 ### Gateway
 
 ```bash
-arc gateway deposit -w <wallet-id> -a <amount>                          # Deposit to unified balance
-arc gateway transfer -w <wallet-id> -t <addr> -c ETH-SEPOLIA -a <amount> # Transfer via gateway
-arc gateway balance -w <wallet-id>                                       # Check gateway balance
+arc gateway deposit -w <wallet-id> -a <amount>                                        # Deposit to unified balance
+arc gateway transfer -w <wallet-id> -f <source> -t <dest> -c ETH-SEPOLIA -a <amount>  # Transfer via gateway
+arc gateway balance -w <wallet-id>                                                     # Check gateway balance
 ```
 
 ### Smart Contracts
 
 ```bash
-# Deploy with Foundry
-arc deploy <contract-path>
+# Deploy tokens, NFTs, DEX
+arc deploy token MyToken MTK 1000000
+arc deploy nft MyNFT MNFT 100 --image ./logo.png
+arc deploy dex
+arc deploy list                         # List all deployments
+arc deploy verify <address>             # Verify on Blockscout
+
+# Deploy with custom Solidity file
+arc deploy token MyToken MTK 1000000 --sol ./MyToken.sol
 
 # Deploy Circle templates
 arc contract deploy --template erc20 --name "MyToken" --symbol "MTK" -w <wallet-id>
-arc contract deploy --template erc721 --name "MyNFT" --symbol "NFT" -w <wallet-id>
 
-# Interact with contracts
-arc contract interact -a <contract-addr> --abi <path> -f <function> --args <args>
-
-# Verify on Blockscout
-arc contract verify -a <contract-addr> -c <contract-path>
+# Interact with contracts (read/write)
+arc contract interact -a <contract-addr> -f "balanceOf(address)" --args <addr>
+arc contract interact -a <contract-addr> -f "transfer(address,uint256)" --args <addr> 100 --write
 ```
 
 ### On-Chain Messages
@@ -169,7 +175,13 @@ arc message write "GM" -t <recipient-address>   # Write message to someone
 ### DEX
 
 ```bash
-arc dex                   # Interactive DEX operations (swaps, liquidity)
+arc dex create-pool <token-addr> --dex <dex-addr>              # Create USDC/Token pool
+arc dex add-liquidity <token> <usdc-amt> <token-amt> --dex ... # Add liquidity
+arc dex remove-liquidity <token> --dex <dex-addr>              # Remove liquidity
+arc dex swap <amount> usdc <token-addr> --dex <dex-addr>       # Swap USDC -> Token
+arc dex swap <amount> <token-addr> usdc --dex <dex-addr>       # Swap Token -> USDC
+arc dex quote <amount> usdc <token-addr> --dex <dex-addr>      # Get quote
+arc dex pools --dex <dex-addr>                                 # List pools
 ```
 
 ### x402 Protocol
@@ -270,7 +282,7 @@ npm run build
 
 ## Testing
 
-The project has 399 tests (331 Vitest + 68 Foundry):
+The project has 434 tests (332 Vitest + 102 Foundry):
 
 ```bash
 # Run all Vitest tests
@@ -330,7 +342,7 @@ arcclitools/
 │   ├── contracts/              # Solidity contracts and ABIs
 │   └── types/
 │       └── index.ts            # TypeScript interfaces
-├── test/                       # 331 Vitest tests
+├── test/                       # 332 Vitest tests + 102 Foundry tests
 ├── templates/                  # x402 server templates
 └── arc-docs/                   # Arc Network documentation
 ```
