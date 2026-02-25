@@ -18,7 +18,12 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { getRpcUrl, requirePrivateKey } from "../config/env.js";
-import { ARC_TESTNET, ALTERNATIVE_RPCS, NATIVE_USDC_DECIMALS, ERC20_ABI } from "../config/constants.js";
+import {
+  ARC_TESTNET,
+  ALTERNATIVE_RPCS,
+  NATIVE_USDC_DECIMALS,
+  ERC20_ABI,
+} from "../config/constants.js";
 
 const erc20Abi = parseAbi(ERC20_ABI as readonly string[]);
 

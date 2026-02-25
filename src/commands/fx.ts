@@ -166,8 +166,16 @@ export function registerFxCommand(program: Command): void {
             ["Maker Delivered", `${parseFloat(makerDel).toFixed(6)} ${baseSymbol}`],
             ["Taker Delivered", `${parseFloat(takerDel).toFixed(6)} ${quoteSymbol}`],
             ["Status", TRADE_STATUS_LABELS[trade.status] ?? `Unknown (${trade.status})`],
-            ["Maker Funding", FUNDING_STATUS_LABELS[trade.makerFundingStatus] ?? `Unknown (${trade.makerFundingStatus})`],
-            ["Taker Funding", FUNDING_STATUS_LABELS[trade.takerFundingStatus] ?? `Unknown (${trade.takerFundingStatus})`],
+            [
+              "Maker Funding",
+              FUNDING_STATUS_LABELS[trade.makerFundingStatus] ??
+                `Unknown (${trade.makerFundingStatus})`,
+            ],
+            [
+              "Taker Funding",
+              FUNDING_STATUS_LABELS[trade.takerFundingStatus] ??
+                `Unknown (${trade.takerFundingStatus})`,
+            ],
             ["Expiry", `${expiry.toISOString()}${isExpired ? " (EXPIRED)" : ""}`],
           ]
         );
@@ -212,7 +220,9 @@ export function registerFxCommand(program: Command): void {
           const baseSymbol = resolveTokenSymbol(trade.baseToken);
           const quoteSymbol = resolveTokenSymbol(trade.quoteToken);
           const baseAmt = parseFloat(formatUnits(trade.baseAmount, ERC20_USDC_DECIMALS)).toFixed(2);
-          const quoteAmt = parseFloat(formatUnits(trade.quoteAmount, ERC20_USDC_DECIMALS)).toFixed(2);
+          const quoteAmt = parseFloat(formatUnits(trade.quoteAmount, ERC20_USDC_DECIMALS)).toFixed(
+            2
+          );
           const status = TRADE_STATUS_LABELS[trade.status] ?? String(trade.status);
 
           rows.push([
@@ -229,10 +239,7 @@ export function registerFxCommand(program: Command): void {
         s.succeed(`${total} total trades (showing last ${rows.length})`);
         log.newline();
 
-        table(
-          ["ID", "Pair", "Base", "Quote", "Status", "Maker", "Taker"],
-          rows
-        );
+        table(["ID", "Pair", "Base", "Quote", "Status", "Maker", "Taker"], rows);
 
         log.newline();
         log.dim(`Details: arc fx trade <id>`);
@@ -279,7 +286,10 @@ export function registerFxCommand(program: Command): void {
 
         log.title("Breach Trade");
         log.label("Trade ID", String(tradeId));
-        log.label("Pair", `${resolveTokenSymbol(trade.baseToken)} / ${resolveTokenSymbol(trade.quoteToken)}`);
+        log.label(
+          "Pair",
+          `${resolveTokenSymbol(trade.baseToken)} / ${resolveTokenSymbol(trade.quoteToken)}`
+        );
         log.label("Status", status);
         log.label("Expired", expiry.toISOString());
         log.newline();
@@ -349,10 +359,7 @@ export function registerFxCommand(program: Command): void {
           ]);
         }
 
-        table(
-          ["Trade ID", "Maker Base", "Taker Quote", "Maker Net"],
-          rows
-        );
+        table(["Trade ID", "Maker Base", "Taker Quote", "Maker Net"], rows);
       } catch (err) {
         s.fail("Failed to fetch balances");
         log.error((err as Error).message);

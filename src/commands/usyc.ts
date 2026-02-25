@@ -1,6 +1,12 @@
 import { Command } from "commander";
 import { log, table, spinner } from "../utils/logger.js";
-import { readContract, getWalletClient, waitForReceipt, approveERC20, arcTestnet } from "../services/rpc.js";
+import {
+  readContract,
+  getWalletClient,
+  waitForReceipt,
+  approveERC20,
+  arcTestnet,
+} from "../services/rpc.js";
 import { validateAddress, validateAmount } from "../utils/validator.js";
 import {
   ARC_TESTNET,
@@ -127,7 +133,10 @@ export function registerUsycCommand(program: Command): void {
             ["Mint Price (oracle)", `${parseFloat(price).toFixed(6)} USDC/USYC`],
             ["1 USDC -> USYC (convert)", `${parseFloat(sharesForOneUSDC).toFixed(6)} USYC`],
             ["1 USYC -> USDC (convert)", `${parseFloat(assetsForOneUSYC).toFixed(6)} USDC`],
-            ["1 USDC deposit -> USYC", `${parseFloat(depositPreview).toFixed(6)} USYC (after fees)`],
+            [
+              "1 USDC deposit -> USYC",
+              `${parseFloat(depositPreview).toFixed(6)} USYC (after fees)`,
+            ],
             ["1 USYC redeem -> USDC", `${parseFloat(redeemPreview).toFixed(6)} USDC (after fees)`],
           ]
         );
@@ -239,7 +248,10 @@ export function registerUsycCommand(program: Command): void {
           [
             ["Input", `${amount} ${inputLabel}`],
             ["Output", `${parseFloat(resultFormatted).toFixed(6)} ${outputLabel}`],
-            ["Rate", `1 ${inputLabel} = ~${(parseFloat(resultFormatted) / parseFloat(amount)).toFixed(6)} ${outputLabel}`],
+            [
+              "Rate",
+              `1 ${inputLabel} = ~${(parseFloat(resultFormatted) / parseFloat(amount)).toFixed(6)} ${outputLabel}`,
+            ],
           ]
         );
 

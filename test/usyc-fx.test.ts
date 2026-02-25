@@ -35,9 +35,7 @@ async function runCLI(...args: string[]): Promise<{ exitCode: number | undefined
 
 describe("USYC contract addresses", () => {
   it("has USYC token address", () => {
-    expect(ARC_TESTNET.contracts.USYC.address).toBe(
-      "0xe9185F0c5F296Ed1797AaE4238D26CCaBEadb86C"
-    );
+    expect(ARC_TESTNET.contracts.USYC.address).toBe("0xe9185F0c5F296Ed1797AaE4238D26CCaBEadb86C");
   });
 
   it("has USYC Teller address", () => {

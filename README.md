@@ -24,19 +24,13 @@ Arc is a Layer-1 blockchain built by Circle where USDC serves as the native gas 
 ## Installation
 
 ```bash
-# Clone and install
 git clone https://github.com/0xbyt4/arcclitools.git
 cd arcclitools
-npm install
-
-# Run via tsx (development)
-npx tsx bin/arc-cli.ts --help
-
-# Or build and use globally
-npm run build
-npm link
+bash setup.sh
 arc --help
 ```
+
+The setup script installs dependencies, builds the project, and adds the `arc` command to your PATH (`~/.local/bin`).
 
 **Requirements:** Node.js >= 18.0.0
 
