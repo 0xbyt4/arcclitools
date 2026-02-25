@@ -2,6 +2,7 @@ import {
   createPublicClient,
   createWalletClient,
   http,
+  fallback,
   formatGwei,
   formatUnits,
   parseUnits,
@@ -17,7 +18,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { getRpcUrl, requirePrivateKey } from "../config/env.js";
-import { ARC_TESTNET, NATIVE_USDC_DECIMALS, ERC20_ABI } from "../config/constants.js";
+import { ARC_TESTNET, ALTERNATIVE_RPCS, NATIVE_USDC_DECIMALS, ERC20_ABI } from "../config/constants.js";
 
 const erc20Abi = parseAbi(ERC20_ABI as readonly string[]);
 
@@ -39,11 +40,20 @@ export const arcTestnet: Chain = defineChain({
 
 let clientInstance: PublicClient<Transport, Chain> | null = null;
 
+function buildTransport() {
+  const primaryUrl = getRpcUrl();
+  const transports = [http(primaryUrl)];
+  for (const url of ALTERNATIVE_RPCS) {
+    if (url !== primaryUrl) transports.push(http(url));
+  }
+  return fallback(transports, { rank: true });
+}
+
 export function getPublicClient(): PublicClient<Transport, Chain> {
   if (!clientInstance) {
     clientInstance = createPublicClient({
       chain: arcTestnet,
-      transport: http(getRpcUrl()),
+      transport: buildTransport(),
     }) as PublicClient<Transport, Chain>;
   }
   return clientInstance;
@@ -144,7 +154,7 @@ export function getWalletClient(): WalletClient {
     walletInstance = createWalletClient({
       account,
       chain: arcTestnet,
-      transport: http(getRpcUrl()),
+      transport: buildTransport(),
     });
   }
   return walletInstance;
