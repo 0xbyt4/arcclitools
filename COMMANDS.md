@@ -1,6 +1,6 @@
 # arc-cli Command Reference
 
-Complete reference for all 58 commands across 18 command groups.
+Complete reference for all 72 commands across 20 command groups.
 
 ---
 
@@ -23,6 +23,8 @@ Complete reference for all 58 commands across 18 command groups.
 - [addresses](#addresses) - Known contract addresses
 - [info](#info) - Network info and ecosystem
 - [docs](#docs) - Documentation access
+- [usyc](#usyc) - USYC yield-bearing token (Teller)
+- [fx](#fx) - StableFX escrow trades
 - [dex](#dex) - DEX swap and liquidity
 
 ---
@@ -809,6 +811,184 @@ Search local `arc-docs/` directory for a keyword.
 ```bash
 arc docs search "gas fees"
 arc docs search "bridge" -l 5
+```
+
+---
+
+## usyc
+
+USYC yield-bearing token operations. Mint/redeem USYC via the Hashnote Teller (ERC-4626 vault), check rates, balances, and entitlement status.
+
+### `arc usyc info`
+
+Show USYC Teller details (oracle, mint price, total assets, trading hours, authority).
+
+```bash
+arc usyc info
+```
+
+### `arc usyc rate`
+
+Show current USDC/USYC exchange rate, conversion rates, and preview rates.
+
+```bash
+arc usyc rate
+```
+
+### `arc usyc balance [address]`
+
+Check USYC balance, USDC value, and max deposit/redeem limits for an address.
+
+```bash
+arc usyc balance
+arc usyc balance 0x1234...abcd
+```
+
+### `arc usyc preview <action> <amount>`
+
+Preview a deposit, mint, redeem, or withdraw operation without executing.
+
+| Argument | Description |
+|----------|-------------|
+| `<action>` | Action: `deposit`, `mint`, `redeem`, `withdraw` |
+| `<amount>` | Amount (USDC for deposit/withdraw, USYC for mint/redeem) |
+
+```bash
+arc usyc preview deposit 1000
+arc usyc preview redeem 500
+```
+
+### `arc usyc deposit <amount>`
+
+Deposit USDC to receive USYC shares. Handles ERC-20 approval automatically.
+
+| Argument | Description |
+|----------|-------------|
+| `<amount>` | Amount of USDC to deposit |
+
+```bash
+arc usyc deposit 1000
+```
+
+**Requires:** `PRIVATE_KEY` in `.env` or config. Address must be entitled.
+
+### `arc usyc redeem <shares>`
+
+Redeem USYC shares for USDC.
+
+| Argument | Description |
+|----------|-------------|
+| `<shares>` | Amount of USYC to redeem |
+
+```bash
+arc usyc redeem 500
+```
+
+**Requires:** `PRIVATE_KEY` in `.env` or config.
+
+### `arc usyc withdraw <amount>`
+
+Withdraw an exact USDC amount by burning the required USYC shares.
+
+| Argument | Description |
+|----------|-------------|
+| `<amount>` | Exact USDC amount to withdraw |
+
+```bash
+arc usyc withdraw 100
+```
+
+**Requires:** `PRIVATE_KEY` in `.env` or config.
+
+### `arc usyc entitled <address>`
+
+Check if an address is entitled to interact with the USYC Teller (deposit, redeem, transfer permissions and role bitmap).
+
+| Argument | Description |
+|----------|-------------|
+| `<address>` | Address to check |
+
+```bash
+arc usyc entitled 0x1234...abcd
+```
+
+---
+
+## fx
+
+StableFX escrow-based FX trading. Query trade details, check balances, and manage breach declarations for USDC/EURC swaps via the FxEscrow contract.
+
+### `arc fx info`
+
+Show FxEscrow contract details (permit2, last trade ID, EIP-712 domain, owner).
+
+```bash
+arc fx info
+```
+
+### `arc fx trade <id>`
+
+Show full details for a specific trade (pair, amounts, FX rate, maker/taker, fees, status, funding, expiry).
+
+| Argument | Description |
+|----------|-------------|
+| `<id>` | Trade ID (positive integer) |
+
+```bash
+arc fx trade 1
+arc fx trade 133
+```
+
+### `arc fx trades`
+
+List recent trades in a table.
+
+| Option | Description |
+|--------|-------------|
+| `-n, --count <count>` | Number of recent trades to show (default: 10) |
+
+```bash
+arc fx trades
+arc fx trades -n 20
+```
+
+### `arc fx breach <id>`
+
+Declare an FX trade as breached (counterparty failed to deliver). Validates trade is Active and expired before submitting.
+
+| Argument | Description |
+|----------|-------------|
+| `<id>` | Trade ID to breach |
+
+```bash
+arc fx breach 42
+```
+
+**Requires:** `PRIVATE_KEY` in `.env` or config.
+
+### `arc fx balances <ids...>`
+
+Check maker base, taker quote, and maker net balances for one or more trade IDs.
+
+| Argument | Description |
+|----------|-------------|
+| `<ids...>` | One or more trade IDs |
+
+```bash
+arc fx balances 1 2 3
+arc fx balances 100
+```
+
+### `arc fx relayer <address>`
+
+Check if an address is an authorized FxEscrow relayer.
+
+| Argument | Description |
+|----------|-------------|
+| `<address>` | Address to check |
+
+```bash
+arc fx relayer 0x1234...abcd
 ```
 
 ---

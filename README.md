@@ -15,8 +15,11 @@ Arc is a Layer-1 blockchain built by Circle where USDC serves as the native gas 
 - **On-Chain Messages** - Write and read messages on the blockchain
 - **DEX** - Swap tokens, add/remove liquidity on constant product AMM
 - **x402 Protocol** - HTTP 402 payment server and client for AI agent monetization
+- **USYC Teller** - Mint/redeem yield-bearing USYC tokens, check rates and entitlements
+- **StableFX** - Query and manage escrow-based FX trades (USDC/EURC swaps)
 - **Block Explorer** - Open transactions, addresses, contracts in Arcscan
 - **Network Info** - Chain details, EVM differences, provider directory
+- **RPC Fallback** - Automatic failover across multiple RPC endpoints
 
 ## Installation
 
@@ -199,6 +202,30 @@ arc dex quote 10 usdc <token-addr> --dex <dex-addr>            # Get quote
 arc dex pools --dex <dex-addr>                                 # List pools
 ```
 
+### USYC (Yield-Bearing Token)
+
+```bash
+arc usyc info                          # Teller details (oracle, mint price, TVL)
+arc usyc rate                          # Current USDC/USYC exchange rate
+arc usyc balance [address]             # USYC balance + USDC value
+arc usyc preview deposit 1000          # Preview deposit/mint/redeem/withdraw
+arc usyc deposit 1000                  # Deposit USDC to receive USYC
+arc usyc redeem 500                    # Redeem USYC for USDC
+arc usyc withdraw 100                  # Withdraw exact USDC amount
+arc usyc entitled 0xAddr...            # Check entitlement permissions
+```
+
+### StableFX (Escrow FX Trades)
+
+```bash
+arc fx info                            # FxEscrow contract details
+arc fx trade 1                         # Trade details (pair, rate, status)
+arc fx trades -n 20                    # List recent trades
+arc fx breach 42                       # Declare trade as breached
+arc fx balances 1 2 3                  # Maker/taker balances for trades
+arc fx relayer 0xAddr...               # Check relayer authorization
+```
+
 ### x402 Protocol
 
 x402 is an HTTP 402 payment protocol that enables AI agents to pay for API access with USDC.
@@ -259,6 +286,8 @@ arc docs search <query>             # Search local docs
 | USYC             | `0xe9185F0c5F296Ed1797AaE4238D26CCaBEadb86C` |
 | GatewayWallet    | `0x0077777d7EBA4688BDeF3E311b846F25870A19B9` |
 | TokenMessengerV2 | `0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA` |
+| USYCTeller       | `0x9fdF14c5B14173D74C08Af27AebFf39240dC105A` |
+| FxEscrow         | `0x867650F5eAe8df91445971f14d89fd84F0C9a9f8` |
 | Multicall3       | `0xcA11bde05977b3631167028862bE2a173976CA11` |
 | Permit2          | `0x000000000022D473030F116dDEE9F6B43aC78BA3` |
 
@@ -295,7 +324,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development conventions and guideline
 
 ## Testing
 
-The project has 434 tests (332 Vitest + 102 Foundry):
+The project has 471 tests (369 Vitest + 102 Foundry):
 
 ```bash
 # Run all Vitest tests
@@ -312,6 +341,7 @@ forge test
 - Input validation (addresses, amounts, URLs, chain names)
 - Config store and environment variable fallback chains
 - RPC chain definitions and gas formatting utilities
+- USYC Teller and StableFX ABI validation and command tests
 - x402 server and client
 - Formatter and validator utilities
 - Solidity contract tests (SimpleToken, SimpleNFT, SimpleDEX) with fuzz testing
@@ -335,7 +365,7 @@ arcclitools/
 │   └── arc-cli.ts              # CLI executable entry point
 ├── src/
 │   ├── index.ts                # Commander setup, command registration
-│   ├── commands/               # CLI command definitions (18 commands)
+│   ├── commands/               # CLI command definitions (20 commands)
 │   ├── services/               # SDK wrappers and business logic
 │   │   ├── circle-wallets.ts   # Circle Developer-Controlled Wallets
 │   │   ├── circle-contracts.ts # Circle Smart Contract Platform
@@ -360,7 +390,7 @@ arcclitools/
 │   ├── contracts/              # Solidity contracts and precompiled ABIs
 │   └── types/
 │       └── index.ts            # Shared TypeScript interfaces
-├── test/                       # 332 Vitest tests + 102 Foundry tests
+├── test/                       # 369 Vitest tests + 102 Foundry tests
 ├── templates/                  # x402 server templates
 └── arc-docs/                   # Arc Network documentation
 ```
