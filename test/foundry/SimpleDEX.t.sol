@@ -277,6 +277,153 @@ contract SimpleDEXTest is Test {
         assertEq(r2a, 200 ether);
     }
 
+    // swapTokenForUSDC emits event
+    function test_swapTokenForUSDC_emitsEvent() public {
+        _createPoolAndAddLiquidity(deployer, 1000 ether, 10000 * 10 ** 18);
+
+        vm.startPrank(alice);
+        token.approve(address(dex), 500 * 10 ** 18);
+        vm.expectEmit(true, true, false, false);
+        emit SimpleDEX.Swap(address(token), alice, false, 0, 0);
+        dex.swapTokenForUSDC(address(token), 500 * 10 ** 18);
+        vm.stopPrank();
+    }
+
+    function test_swapTokenForUSDC_revertsIfPoolDoesNotExist() public {
+        vm.startPrank(alice);
+        token.approve(address(dex), 100 * 10 ** 18);
+        vm.expectRevert("Pool does not exist");
+        dex.swapTokenForUSDC(address(token), 100 * 10 ** 18);
+        vm.stopPrank();
+    }
+
+    // removeLiquidity emits event
+    function test_removeLiquidity_emitsEvent() public {
+        _createPoolAndAddLiquidity(deployer, 1000 ether, 10000 * 10 ** 18);
+        uint256 lp = dex.getLPBalance(address(token), deployer);
+
+        vm.prank(deployer);
+        vm.expectEmit(true, true, false, false);
+        emit SimpleDEX.LiquidityRemoved(address(token), deployer, 0, 0, 0);
+        dex.removeLiquidity(address(token), lp);
+    }
+
+    // Partial remove liquidity
+    function test_removeLiquidity_partial() public {
+        _createPoolAndAddLiquidity(deployer, 1000 ether, 10000 * 10 ** 18);
+        uint256 lpTotal = dex.getLPBalance(address(token), deployer);
+        uint256 lpHalf = lpTotal / 2;
+
+        vm.prank(deployer);
+        dex.removeLiquidity(address(token), lpHalf);
+
+        assertEq(dex.getLPBalance(address(token), deployer), lpTotal - lpHalf);
+        (uint256 reserveUSDC, uint256 reserveToken) = dex.getReserves(address(token));
+        assertGt(reserveUSDC, 0);
+        assertGt(reserveToken, 0);
+    }
+
+    // Second provider gets proportional LP
+    function test_addLiquidity_secondProvider() public {
+        _createPoolAndAddLiquidity(deployer, 1000 ether, 10000 * 10 ** 18);
+        uint256 deployerLP = dex.getLPBalance(address(token), deployer);
+
+        // Alice adds same ratio = same LP
+        vm.startPrank(alice);
+        token.approve(address(dex), 10000 * 10 ** 18);
+        dex.addLiquidity{value: 1000 ether}(address(token), 10000 * 10 ** 18);
+        vm.stopPrank();
+
+        uint256 aliceLP = dex.getLPBalance(address(token), alice);
+        assertEq(aliceLP, deployerLP);
+    }
+
+    // getReserves for pool with no liquidity
+    function test_getReserves_emptyPool() public {
+        vm.prank(deployer);
+        dex.createPool(address(token));
+
+        (uint256 reserveUSDC, uint256 reserveToken) = dex.getReserves(address(token));
+        assertEq(reserveUSDC, 0);
+        assertEq(reserveToken, 0);
+    }
+
+    // getLPBalance for non-provider
+    function test_getLPBalance_nonProvider() public {
+        _createPoolAndAddLiquidity(deployer, 1000 ether, 10000 * 10 ** 18);
+        assertEq(dex.getLPBalance(address(token), alice), 0);
+    }
+
+    // getPoolCount initially zero
+    function test_getPoolCount_initiallyZero() public view {
+        assertEq(dex.getPoolCount(), 0);
+    }
+
+    // owner is set
+    function test_owner_isDeployer() public view {
+        assertEq(dex.owner(), deployer);
+    }
+
+    // receive() accepts native USDC
+    function test_receive_acceptsNativeUSDC() public {
+        vm.prank(alice);
+        (bool sent,) = address(dex).call{value: 1 ether}("");
+        assertTrue(sent);
+        assertEq(address(dex).balance, 1 ether);
+    }
+
+    // Price impact: large swap moves price significantly
+    function test_priceImpact_largeSwap() public {
+        _createPoolAndAddLiquidity(deployer, 1000 ether, 10000 * 10 ** 18);
+
+        // Small swap quote
+        uint256 smallQuote = dex.getQuote(address(token), 1 ether, true);
+        // Large swap quote (50% of reserves)
+        uint256 largeQuote = dex.getQuote(address(token), 500 ether, true);
+
+        // Price per USDC should be worse for large swap
+        // smallQuote / 1 > largeQuote / 500 (in terms of tokens per USDC)
+        assertGt(smallQuote * 500, largeQuote);
+    }
+
+    // Buy then sell shows fee loss
+    function test_roundTrip_losesToFees() public {
+        _createPoolAndAddLiquidity(deployer, 1000 ether, 10000 * 10 ** 18);
+
+        // Alice buys tokens with 100 USDC
+        vm.prank(alice);
+        dex.swapUSDCForToken{value: 100 ether}(address(token));
+
+        uint256 tokensReceived = token.balanceOf(alice) - 100000 * 10 ** 18;
+
+        // Alice sells those tokens back
+        vm.startPrank(alice);
+        token.approve(address(dex), tokensReceived);
+        dex.swapTokenForUSDC(address(token), tokensReceived);
+        vm.stopPrank();
+
+        // Alice should have less USDC than she started with (fee loss)
+        assertLt(alice.balance, 10000 ether);
+    }
+
+    // K invariant after token->USDC swap
+    function test_swap_tokenToUSDC_maintainsK() public {
+        _createPoolAndAddLiquidity(deployer, 1000 ether, 10000 * 10 ** 18);
+
+        (uint256 r0Before, uint256 r1Before) = dex.getReserves(address(token));
+        uint256 kBefore = r0Before * r1Before;
+
+        vm.startPrank(alice);
+        token.approve(address(dex), 500 * 10 ** 18);
+        dex.swapTokenForUSDC(address(token), 500 * 10 ** 18);
+        vm.stopPrank();
+
+        (uint256 r0After, uint256 r1After) = dex.getReserves(address(token));
+        uint256 kAfter = r0After * r1After;
+
+        assertGe(kAfter, kBefore);
+    }
+
     // Helper
     function _createPoolAndAddLiquidity(address provider, uint256 usdcAmount, uint256 tokenAmount) internal {
         vm.prank(provider);

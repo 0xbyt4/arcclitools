@@ -129,4 +129,96 @@ contract SimpleTokenTest is Test {
         assertEq(bigToken.totalSupply(), 1000000000 * 10 ** 18);
         assertEq(bigToken.balanceOf(deployer), 1000000000 * 10 ** 18);
     }
+
+    // TransferFrom edge cases
+    function test_transferFrom_emitsTransferEvent() public {
+        vm.prank(deployer);
+        token.approve(alice, 100 * 10 ** 18);
+
+        vm.prank(alice);
+        vm.expectEmit(true, true, false, true);
+        emit SimpleToken.Transfer(deployer, bob, 50 * 10 ** 18);
+        token.transferFrom(deployer, bob, 50 * 10 ** 18);
+    }
+
+    function test_transferFrom_revertsOnInsufficientBalance() public {
+        // Deployer gives alice all tokens, then approves bob to spend from deployer (who has 0)
+        vm.prank(deployer);
+        token.transfer(alice, 1000 * 10 ** 18);
+        assertEq(token.balanceOf(deployer), 0);
+
+        vm.prank(deployer);
+        token.approve(bob, 500 * 10 ** 18);
+
+        vm.prank(bob);
+        vm.expectRevert("Insufficient balance");
+        token.transferFrom(deployer, bob, 1);
+    }
+
+    function test_transferFrom_zeroAmount() public {
+        vm.prank(deployer);
+        token.approve(alice, 100 * 10 ** 18);
+
+        vm.prank(alice);
+        bool success = token.transferFrom(deployer, bob, 0);
+        assertTrue(success);
+        assertEq(token.balanceOf(bob), 0);
+    }
+
+    function test_approve_toZeroAddress() public {
+        vm.prank(deployer);
+        token.approve(address(0), 100 * 10 ** 18);
+        assertEq(token.allowance(deployer, address(0)), 100 * 10 ** 18);
+    }
+
+    // Chain of transfers
+    function test_transfer_multipleRecipients() public {
+        vm.prank(deployer);
+        token.transfer(alice, 300 * 10 ** 18);
+        vm.prank(alice);
+        token.transfer(bob, 100 * 10 ** 18);
+
+        assertEq(token.balanceOf(deployer), 700 * 10 ** 18);
+        assertEq(token.balanceOf(alice), 200 * 10 ** 18);
+        assertEq(token.balanceOf(bob), 100 * 10 ** 18);
+    }
+
+    // Fuzz test
+    function test_fuzz_transfer(uint256 amount) public {
+        amount = bound(amount, 0, 1000 * 10 ** 18);
+        vm.prank(deployer);
+        token.transfer(alice, amount);
+        assertEq(token.balanceOf(alice), amount);
+        assertEq(token.balanceOf(deployer), 1000 * 10 ** 18 - amount);
+    }
+
+    function test_fuzz_approve_and_transferFrom(uint256 approveAmt, uint256 transferAmt) public {
+        approveAmt = bound(approveAmt, 0, 1000 * 10 ** 18);
+        transferAmt = bound(transferAmt, 0, approveAmt);
+
+        vm.prank(deployer);
+        token.approve(alice, approveAmt);
+
+        vm.prank(alice);
+        token.transferFrom(deployer, bob, transferAmt);
+
+        assertEq(token.balanceOf(bob), transferAmt);
+        assertEq(token.allowance(deployer, alice), approveAmt - transferAmt);
+    }
+
+    // Constructor with zero supply
+    function test_constructor_zeroSupply() public {
+        vm.prank(deployer);
+        SimpleToken zeroToken = new SimpleToken("Zero", "ZRO", 0);
+        assertEq(zeroToken.totalSupply(), 0);
+        assertEq(zeroToken.balanceOf(deployer), 0);
+    }
+
+    // Constructor emits Transfer event
+    function test_constructor_emitsTransferEvent() public {
+        vm.prank(deployer);
+        vm.expectEmit(true, true, false, true);
+        emit SimpleToken.Transfer(address(0), deployer, 500 * 10 ** 18);
+        new SimpleToken("New", "NEW", 500);
+    }
 }

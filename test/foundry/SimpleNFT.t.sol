@@ -205,4 +205,131 @@ contract SimpleNFTTest is Test {
         vm.expectRevert("Token does not exist");
         nft.getApproved(999);
     }
+
+    // safeTransferFrom tests
+    function test_safeTransferFrom_success() public {
+        vm.prank(deployer);
+        nft.mint(alice, 1);
+
+        vm.prank(alice);
+        nft.safeTransferFrom(alice, bob, 1);
+        assertEq(nft.ownerOf(1), bob);
+    }
+
+    function test_safeTransferFrom_withData() public {
+        vm.prank(deployer);
+        nft.mint(alice, 1);
+
+        vm.prank(alice);
+        nft.safeTransferFrom(alice, bob, 1, "test data");
+        assertEq(nft.ownerOf(1), bob);
+    }
+
+    // Approve by operator (not just token owner)
+    function test_approve_byOperator() public {
+        vm.prank(deployer);
+        nft.mint(alice, 1);
+
+        vm.prank(alice);
+        nft.setApprovalForAll(bob, true);
+
+        // Bob as operator can approve on behalf of alice
+        vm.prank(bob);
+        nft.approve(deployer, 1);
+        assertEq(nft.getApproved(1), deployer);
+    }
+
+    function test_approve_revertsIfNotAuthorized() public {
+        vm.prank(deployer);
+        nft.mint(alice, 1);
+
+        // Bob is not owner or operator
+        vm.prank(bob);
+        vm.expectRevert("Not authorized");
+        nft.approve(deployer, 1);
+    }
+
+    // setApprovalForAll revoke
+    function test_setApprovalForAll_revoke() public {
+        vm.prank(alice);
+        nft.setApprovalForAll(bob, true);
+        assertTrue(nft.isApprovedForAll(alice, bob));
+
+        vm.prank(alice);
+        nft.setApprovalForAll(bob, false);
+        assertFalse(nft.isApprovedForAll(alice, bob));
+    }
+
+    function test_setApprovalForAll_emitsEvent() public {
+        vm.prank(alice);
+        vm.expectEmit(true, true, false, true);
+        emit SimpleNFT.ApprovalForAll(alice, bob, true);
+        nft.setApprovalForAll(bob, true);
+    }
+
+    // isApprovedForAll returns false initially
+    function test_isApprovedForAll_defaultFalse() public view {
+        assertFalse(nft.isApprovedForAll(alice, bob));
+    }
+
+    // Transfer emits event
+    function test_transferFrom_emitsTransferEvent() public {
+        vm.prank(deployer);
+        nft.mint(alice, 1);
+
+        vm.prank(alice);
+        vm.expectEmit(true, true, true, true);
+        emit SimpleNFT.Transfer(alice, bob, 1);
+        nft.transferFrom(alice, bob, 1);
+    }
+
+    // transferFrom reverts if wrong from
+    function test_transferFrom_revertsIfNotTokenOwner() public {
+        vm.prank(deployer);
+        nft.mint(alice, 2);
+
+        // alice owns token 1 and 2, try transferFrom(bob, ...) when bob doesn't own it
+        vm.prank(alice);
+        vm.expectRevert("Not token owner");
+        nft.transferFrom(bob, alice, 1);
+    }
+
+    // Operator can transfer
+    function test_transferFrom_byOperator() public {
+        vm.prank(deployer);
+        nft.mint(alice, 1);
+
+        vm.prank(alice);
+        nft.setApprovalForAll(bob, true);
+
+        vm.prank(bob);
+        nft.transferFrom(alice, deployer, 1);
+        assertEq(nft.ownerOf(1), deployer);
+    }
+
+    // Mint updates balance correctly for multiple mints
+    function test_mint_tokenIdsAreSequential() public {
+        vm.prank(deployer);
+        nft.mint(alice, 3);
+        assertEq(nft.ownerOf(1), alice);
+        assertEq(nft.ownerOf(2), alice);
+        assertEq(nft.ownerOf(3), alice);
+
+        vm.prank(deployer);
+        nft.mint(bob, 2);
+        assertEq(nft.ownerOf(4), bob);
+        assertEq(nft.ownerOf(5), bob);
+        assertEq(nft.totalSupply(), 5);
+    }
+
+    // Approve emits event
+    function test_approve_emitsEvent() public {
+        vm.prank(deployer);
+        nft.mint(alice, 1);
+
+        vm.prank(alice);
+        vm.expectEmit(true, true, true, true);
+        emit SimpleNFT.Approval(alice, bob, 1);
+        nft.approve(bob, 1);
+    }
 }
