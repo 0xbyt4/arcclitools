@@ -42,9 +42,11 @@ function backupAndWriteEnv(address: string, privateKey: string): { backedUp: boo
     newLines.push(`WALLET_ADDRESS=${address}`);
     newLines.push("");
 
-    writeFileSync(envPath, newLines.join("\n"));
+    writeFileSync(envPath, newLines.join("\n"), { mode: 0o600 });
   } else {
-    writeFileSync(envPath, `PRIVATE_KEY=${privateKey}\nWALLET_ADDRESS=${address}\n`);
+    writeFileSync(envPath, `PRIVATE_KEY=${privateKey}\nWALLET_ADDRESS=${address}\n`, {
+      mode: 0o600,
+    });
   }
 
   return { backedUp };

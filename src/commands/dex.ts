@@ -367,7 +367,7 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
         log.label("To", `~${parseFloat(quoteFormatted).toFixed(6)} ${toLabel}`);
         log.label(
           "Rate",
-          `1 ${fromLabel} = ~${(parseFloat(quoteFormatted) / parseFloat(amount)).toFixed(6)} ${toLabel}`
+          `1 ${fromLabel} = ~${(parseFloat(amount) > 0 ? parseFloat(quoteFormatted) / parseFloat(amount) : 0).toFixed(6)} ${toLabel}`
         );
         log.newline();
 
@@ -480,7 +480,8 @@ Get a quote first: arc dex quote 10 usdc 0xToken...
         })) as bigint;
 
         const quoteFormatted = formatUnits(quoteRaw, toDecimals);
-        const rate = parseFloat(quoteFormatted) / parseFloat(amount);
+        const parsedAmount = parseFloat(amount);
+        const rate = parsedAmount > 0 ? parseFloat(quoteFormatted) / parsedAmount : 0;
 
         log.title("Swap Quote");
         table(

@@ -14,6 +14,7 @@ const KEY_MAP: Record<string, ConfigKey> = {
   "private-key": "privateKey",
   "x402-port": "x402Port",
   "x402-price": "x402Price",
+  "pinata-jwt": "pinataJwt",
 };
 
 const SENSITIVE_KEYS: ConfigKey[] = ["apiKey", "entitySecret", "privateKey"];

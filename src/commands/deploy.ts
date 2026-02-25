@@ -1,8 +1,8 @@
 import { Command } from "commander";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, statSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { execSync } from "child_process";
+import { execFileSync, type ExecFileSyncOptions } from "child_process";
 import { log, table, spinner } from "../utils/logger.js";
 import { deployContract, callContract, waitForReceipt } from "../services/rpc.js";
 import { checkFoundryInstalled } from "../services/foundry.js";
@@ -15,112 +15,76 @@ import {
 import { ARC_TESTNET } from "../config/constants.js";
 import { validateAddress } from "../utils/validator.js";
 import { uploadFileToPinata } from "../services/pinata.js";
-import { statSync } from "fs";
 import type { Abi } from "viem";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const pipeOpts: ExecFileSyncOptions = { encoding: "utf-8", stdio: "pipe" };
 
 function compileWithFoundry(
   solPath: string,
   contractName: string
 ): { abi: Abi; bytecode: `0x${string}`; sourceCode: string } {
-  const tmpDir = execSync("mktemp -d", { encoding: "utf-8" }).trim();
+  const tmpDir = (execFileSync("mktemp", ["-d"], pipeOpts) as string).trim();
 
-  execSync(`forge init --no-git --quiet "${tmpDir}"`, { stdio: "pipe" });
-  execSync(`cp "${solPath}" "${tmpDir}/src/${contractName}.sol"`, { stdio: "pipe" });
-  execSync(`forge build --root "${tmpDir}" --quiet`, { stdio: "pipe" });
+  try {
+    execFileSync("forge", ["init", "--no-git", "--quiet", tmpDir], pipeOpts);
+    execFileSync("cp", [solPath, `${tmpDir}/src/${contractName}.sol`], pipeOpts);
+    execFileSync("forge", ["build", "--root", tmpDir, "--quiet"], pipeOpts);
 
-  const artifactPath = `${tmpDir}/out/${contractName}.sol/${contractName}.json`;
-  const artifact = JSON.parse(readFileSync(artifactPath, "utf-8"));
-  const bytecode = artifact.bytecode.object.startsWith("0x")
-    ? artifact.bytecode.object
-    : `0x${artifact.bytecode.object}`;
+    const artifactPath = `${tmpDir}/out/${contractName}.sol/${contractName}.json`;
+    const artifact = JSON.parse(readFileSync(artifactPath, "utf-8"));
+    const bytecode = artifact.bytecode.object.startsWith("0x")
+      ? artifact.bytecode.object
+      : `0x${artifact.bytecode.object}`;
 
-  const sourceCode = readFileSync(solPath, "utf-8");
+    const sourceCode = readFileSync(solPath, "utf-8");
 
-  execSync(`rm -rf "${tmpDir}"`, { stdio: "pipe" });
-
-  return { abi: artifact.abi, bytecode: bytecode as `0x${string}`, sourceCode };
+    return { abi: artifact.abi, bytecode: bytecode as `0x${string}`, sourceCode };
+  } finally {
+    try {
+      execFileSync("rm", ["-rf", tmpDir], pipeOpts);
+    } catch {
+      // Best-effort cleanup
+    }
+  }
 }
 
-function loadPrecompiledArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceCode: string } {
-  const artifactPath = resolve(__dirname, "../contracts/SimpleToken.json");
-  const artifact = JSON.parse(readFileSync(artifactPath, "utf-8"));
-  const bytecode = artifact.bytecode.startsWith("0x")
-    ? artifact.bytecode
-    : `0x${artifact.bytecode}`;
-
-  const solPath = resolve(__dirname, "../contracts/SimpleToken.sol");
-  const sourceCode = existsSync(solPath) ? readFileSync(solPath, "utf-8") : "";
-
-  return { abi: artifact.abi, bytecode, sourceCode };
-}
-
-function loadPrecompiledNFTArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceCode: string } {
-  const artifactPath = resolve(__dirname, "../contracts/SimpleNFT.json");
+function loadPrecompiled(contractName: string): {
+  abi: Abi;
+  bytecode: `0x${string}`;
+  sourceCode: string;
+} {
+  const artifactPath = resolve(__dirname, `../contracts/${contractName}.json`);
   const artifact = JSON.parse(readFileSync(artifactPath, "utf-8"));
   const bytecode = artifact.bytecode.startsWith("0x")
     ? artifact.bytecode
     : `0x${artifact.bytecode}`;
 
-  const solPath = resolve(__dirname, "../contracts/SimpleNFT.sol");
+  const solPath = resolve(__dirname, `../contracts/${contractName}.sol`);
   const sourceCode = existsSync(solPath) ? readFileSync(solPath, "utf-8") : "";
 
   return { abi: artifact.abi, bytecode, sourceCode };
 }
 
-function loadNFTArtifact(): {
+function loadArtifact(contractName: string): {
   abi: Abi;
   bytecode: `0x${string}`;
   sourceCode: string;
   compiled: boolean;
 } {
-  const solPath = resolve(__dirname, "../contracts/SimpleNFT.sol");
+  const solPath = resolve(__dirname, `../contracts/${contractName}.sol`);
 
   if (checkFoundryInstalled() && existsSync(solPath)) {
     try {
-      const result = compileWithFoundry(solPath, "SimpleNFT");
+      const result = compileWithFoundry(solPath, contractName);
       return { ...result, compiled: true };
     } catch {
       // Fall back to precompiled
     }
   }
 
-  const result = loadPrecompiledNFTArtifact();
-  return { ...result, compiled: false };
-}
-
-function loadPrecompiledDEXArtifact(): { abi: Abi; bytecode: `0x${string}`; sourceCode: string } {
-  const artifactPath = resolve(__dirname, "../contracts/SimpleDEX.json");
-  const artifact = JSON.parse(readFileSync(artifactPath, "utf-8"));
-  const bytecode = artifact.bytecode.startsWith("0x")
-    ? artifact.bytecode
-    : `0x${artifact.bytecode}`;
-
-  const solPath = resolve(__dirname, "../contracts/SimpleDEX.sol");
-  const sourceCode = existsSync(solPath) ? readFileSync(solPath, "utf-8") : "";
-
-  return { abi: artifact.abi, bytecode, sourceCode };
-}
-
-function loadDEXArtifact(): {
-  abi: Abi;
-  bytecode: `0x${string}`;
-  sourceCode: string;
-  compiled: boolean;
-} {
-  const solPath = resolve(__dirname, "../contracts/SimpleDEX.sol");
-
-  if (checkFoundryInstalled() && existsSync(solPath)) {
-    try {
-      const result = compileWithFoundry(solPath, "SimpleDEX");
-      return { ...result, compiled: true };
-    } catch {
-      // Fall back to precompiled
-    }
-  }
-
-  const result = loadPrecompiledDEXArtifact();
+  const result = loadPrecompiled(contractName);
   return { ...result, compiled: false };
 }
 
@@ -142,25 +106,34 @@ function imageToDataURI(imagePath: string): string {
   return `data:${mime};base64,${base64}`;
 }
 
-function loadTokenArtifact(): {
-  abi: Abi;
-  bytecode: `0x${string}`;
-  sourceCode: string;
-  compiled: boolean;
-} {
-  const solPath = resolve(__dirname, "../contracts/SimpleToken.sol");
-
-  if (checkFoundryInstalled() && existsSync(solPath)) {
-    try {
-      const result = compileWithFoundry(solPath, "SimpleToken");
-      return { ...result, compiled: true };
-    } catch {
-      // Fall back to precompiled
-    }
+function compileCustomSol(
+  solPath: string,
+  s: ReturnType<typeof spinner>
+): { abi: Abi; bytecode: `0x${string}`; solFile: string } | null {
+  const customPath = resolve(process.cwd(), solPath);
+  if (!existsSync(customPath)) {
+    s.fail("File not found");
+    log.error(`File not found: ${solPath}`);
+    process.exitCode = 1;
+    return null;
   }
 
-  const result = loadPrecompiledArtifact();
-  return { ...result, compiled: false };
+  if (!checkFoundryInstalled()) {
+    s.fail("Foundry required");
+    log.error("Foundry is required to compile custom .sol files.");
+    log.dim("Install with: curl -L https://foundry.paradigm.xyz | bash");
+    process.exitCode = 1;
+    return null;
+  }
+
+  const contractName = solPath
+    .replace(/\.sol$/, "")
+    .split("/")
+    .pop()!;
+  s.text = `Compiling ${contractName}.sol...`;
+  const { abi, bytecode } = compileWithFoundry(customPath, contractName);
+  log.info(`Compiled from: ${solPath}`);
+  return { abi, bytecode, solFile: solPath };
 }
 
 async function verifyOnBlockscout(params: {
@@ -242,32 +215,11 @@ Verify on Blockscout with: arc deploy verify <address>
         let solFile = "SimpleToken.sol";
 
         if (opts.sol) {
-          const customPath = resolve(process.cwd(), opts.sol);
-          if (!existsSync(customPath)) {
-            s.fail("File not found");
-            log.error(`File not found: ${opts.sol}`);
-            process.exitCode = 1;
-            return;
-          }
-
-          if (!checkFoundryInstalled()) {
-            s.fail("Foundry required");
-            log.error("Foundry is required to compile custom .sol files.");
-            log.dim("Install with: curl -L https://foundry.paradigm.xyz | bash");
-            process.exitCode = 1;
-            return;
-          }
-
-          const contractName = opts.sol
-            .replace(/\.sol$/, "")
-            .split("/")
-            .pop()!;
-          solFile = opts.sol;
-          s.text = `Compiling ${contractName}.sol...`;
-          ({ abi, bytecode } = compileWithFoundry(customPath, contractName));
-          log.info(`Compiled from: ${opts.sol}`);
+          const custom = compileCustomSol(opts.sol, s);
+          if (!custom) return;
+          ({ abi, bytecode, solFile } = custom);
         } else {
-          const result = loadTokenArtifact();
+          const result = loadArtifact("SimpleToken");
           abi = result.abi;
           bytecode = result.bytecode;
 
@@ -421,33 +373,12 @@ With --ipfs: Image uploaded to IPFS via Pinata (any size, requires PINATA_JWT in
           let solFile = "SimpleNFT.sol";
 
           if (opts.sol) {
-            const customPath = resolve(process.cwd(), opts.sol);
-            if (!existsSync(customPath)) {
-              s.fail("File not found");
-              log.error(`File not found: ${opts.sol}`);
-              process.exitCode = 1;
-              return;
-            }
-
-            if (!checkFoundryInstalled()) {
-              s.fail("Foundry required");
-              log.error("Foundry is required to compile custom .sol files.");
-              log.dim("Install with: curl -L https://foundry.paradigm.xyz | bash");
-              process.exitCode = 1;
-              return;
-            }
-
-            const contractName = opts.sol
-              .replace(/\.sol$/, "")
-              .split("/")
-              .pop()!;
-            solFile = opts.sol;
-            s.text = `Compiling ${contractName}.sol...`;
-            ({ abi, bytecode } = compileWithFoundry(customPath, contractName));
-            log.info(`Compiled from: ${opts.sol}`);
+            const custom = compileCustomSol(opts.sol, s);
+            if (!custom) return;
+            ({ abi, bytecode, solFile } = custom);
           } else {
             s.text = "Compiling contract...";
-            const result = loadNFTArtifact();
+            const result = loadArtifact("SimpleNFT");
             abi = result.abi;
             bytecode = result.bytecode;
 
@@ -566,31 +497,11 @@ After deploy, use: arc dex create-pool <token-address>
         let solFile = "SimpleDEX.sol";
 
         if (opts.sol) {
-          const customPath = resolve(process.cwd(), opts.sol);
-          if (!existsSync(customPath)) {
-            s.fail("File not found");
-            log.error(`File not found: ${opts.sol}`);
-            process.exitCode = 1;
-            return;
-          }
-
-          if (!checkFoundryInstalled()) {
-            s.fail("Foundry required");
-            log.error("Foundry is required to compile custom .sol files.");
-            process.exitCode = 1;
-            return;
-          }
-
-          const contractName = opts.sol
-            .replace(/\.sol$/, "")
-            .split("/")
-            .pop()!;
-          solFile = opts.sol;
-          s.text = `Compiling ${contractName}.sol...`;
-          ({ abi, bytecode } = compileWithFoundry(customPath, contractName));
-          log.info(`Compiled from: ${opts.sol}`);
+          const custom = compileCustomSol(opts.sol, s);
+          if (!custom) return;
+          ({ abi, bytecode, solFile } = custom);
         } else {
-          const result = loadDEXArtifact();
+          const result = loadArtifact("SimpleDEX");
           abi = result.abi;
           bytecode = result.bytecode;
 

@@ -48,6 +48,7 @@ export function getPublicClient(): PublicClient<Transport, Chain> {
 
 export function resetClient(): void {
   clientInstance = null;
+  walletInstance = null;
 }
 
 export async function getBlockNumber(): Promise<bigint> {
@@ -131,17 +132,20 @@ export function formatGasPriceDisplay(gasPrice: bigint): {
   };
 }
 
-export function getWalletClient(): WalletClient {
-  const key = requirePrivateKey() as `0x${string}`;
-  const account = privateKeyToAccount(key);
-  return createWalletClient({
-    account,
-    chain: arcTestnet,
-    transport: http(getRpcUrl()),
-  });
-}
+let walletInstance: WalletClient | null = null;
 
-const erc20Abi = ERC20_ABI;
+export function getWalletClient(): WalletClient {
+  if (!walletInstance) {
+    const key = requirePrivateKey() as `0x${string}`;
+    const account = privateKeyToAccount(key);
+    walletInstance = createWalletClient({
+      account,
+      chain: arcTestnet,
+      transport: http(getRpcUrl()),
+    });
+  }
+  return walletInstance;
+}
 
 export async function sendNativeUSDC(params: {
   to: `0x${string}`;
@@ -175,14 +179,14 @@ export async function sendERC20(params: {
     params.decimals ??
     ((await client.readContract({
       address: params.tokenAddress,
-      abi: erc20Abi,
+      abi: ERC20_ABI,
       functionName: "decimals",
     })) as number);
 
   const value = parseUnits(params.amount, decimals);
 
   const data = encodeFunctionData({
-    abi: erc20Abi,
+    abi: ERC20_ABI,
     functionName: "transfer",
     args: [params.to, value],
   });
@@ -261,7 +265,7 @@ export async function approveERC20(params: {
   const account = wallet.account!;
 
   const data = encodeFunctionData({
-    abi: erc20Abi,
+    abi: ERC20_ABI,
     functionName: "approve",
     args: [params.spender, params.amount],
   });
@@ -284,12 +288,12 @@ export async function getTokenInfo(
   const [symbol, decimals] = await Promise.all([
     client.readContract({
       address: tokenAddress,
-      abi: erc20Abi,
+      abi: ERC20_ABI,
       functionName: "symbol",
     }),
     client.readContract({
       address: tokenAddress,
-      abi: erc20Abi,
+      abi: ERC20_ABI,
       functionName: "decimals",
     }),
   ]);

@@ -156,8 +156,7 @@ export function registerContractCommand(program: Command): void {
     .option("-a, --address <address>", "Contract address")
     .option("-f, --function <sig>", "Function signature (e.g., 'balanceOf(address)')")
     .option("--args <args...>", "Function arguments")
-    .option("--write", "Send a transaction (write operation)")
-    .option("-w, --wallet-id <id>", "Circle wallet ID (for write operations)")
+    .option("--write", "Send a transaction (write operation, requires PRIVATE_KEY in .env)")
     .action(async (opts) => {
       const address = opts.address || (await promptAddress("Contract address:"));
       const functionSig =
@@ -166,13 +165,16 @@ export function registerContractCommand(program: Command): void {
       requireValidAddress(address, "contract");
 
       if (opts.write) {
-        const walletId = opts.walletId || (await promptText("Circle wallet ID:"));
         const s = spinner("Executing transaction...");
         try {
-          const result = await circleContracts.getContract(walletId);
-          log.newline();
-          console.log(JSON.stringify(result, null, 2));
+          const output = foundry.castSend({
+            contractAddress: address,
+            functionSignature: functionSig,
+            args: opts.args,
+          });
           s.succeed("Transaction executed");
+          log.newline();
+          console.log(output);
         } catch (err) {
           s.fail("Transaction failed");
           log.error((err as Error).message);
