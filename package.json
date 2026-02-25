@@ -28,7 +28,16 @@
     "evm",
     "x402"
   ],
+  "author": "0xbyt4",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xbyt4/arcclitools.git"
+  },
+  "homepage": "https://github.com/0xbyt4/arcclitools#readme",
+  "bugs": {
+    "url": "https://github.com/0xbyt4/arcclitools/issues"
+  },
   "files": [
     "dist",
     "bin",
