@@ -6,14 +6,14 @@ Arc is a Layer-1 blockchain built by Circle where USDC serves as the native gas 
 
 ## Features
 
-- **Wallet Management** - Create, import, and manage wallets (local EOA + Circle developer-controlled)
+- **Wallet Management** - Create and manage wallets (local EOA + Circle developer-controlled)
 - **Token Transfers** - Send USDC, EURC, USYC on Arc with simple commands
-- **Batch Transfers** - Send tokens to multiple recipients from a CSV file
+- **Batch Transfers** - Send tokens to multiple recipients from a text file
 - **Cross-Chain Bridge** - Bridge USDC to/from Arc via Circle's CCTP
 - **Gateway** - Unified crosschain USDC balance via Circle Gateway
-- **Smart Contracts** - Deploy with Foundry or Circle templates, interact, verify
+- **Smart Contracts** - Deploy tokens/NFTs/DEX, interact, verify, monitor events
 - **On-Chain Messages** - Write and read messages on the blockchain
-- **DEX** - Interact with DEX contracts for swaps and liquidity
+- **DEX** - Swap tokens, add/remove liquidity on constant product AMM
 - **x402 Protocol** - HTTP 402 payment server and client for AI agent monetization
 - **Block Explorer** - Open transactions, addresses, contracts in Arcscan
 - **Network Info** - Chain details, EVM differences, provider directory
@@ -40,21 +40,27 @@ arc --help
 ## Quick Start
 
 ```bash
-# 1. Set up configuration
-arc config set api-key <your-circle-api-key>
-arc config set entity-secret <your-entity-secret>
+# 1. Generate a local wallet
+arc wallet generate
 
-# 2. Check network info
-arc network info
+# 2. Check network status
+arc network status
 
-# 3. Create a wallet
-arc wallet create
+# 3. Fund wallet with testnet USDC
+arc wallet fund
 
 # 4. Check balance
-arc wallet balance <address>
+arc wallet balance
 
 # 5. Send USDC
 arc send 10 0xRecipientAddress
+```
+
+For Circle SDK features (developer-controlled wallets, bridge, gateway), also configure:
+
+```bash
+arc config set api-key <your-circle-api-key>
+arc config set entity-secret <your-entity-secret>
 ```
 
 ## Configuration
@@ -66,10 +72,11 @@ Configuration can be set via CLI, environment variables, or `.env` file.
 arc config set api-key <value>
 arc config set entity-secret <value>
 arc config set rpc-url <value>
+arc config set network <value>
 arc config set private-key <value>
+arc config set pinata-jwt <value>
 arc config set x402-port <value>
 arc config set x402-price <value>
-arc config set pinata-jwt <value>
 
 # View config
 arc config get <key>
@@ -89,6 +96,8 @@ cp .env.example .env
 
 ## Commands
 
+For the full command reference with all options and flags, see [COMMANDS.md](COMMANDS.md).
+
 ### Network
 
 ```bash
@@ -101,8 +110,8 @@ arc network gas           # Current gas price in USDC
 
 ```bash
 arc wallet create         # Create Circle developer-controlled wallet
-arc wallet generate       # Generate local EOA keypair
-arc wallet list           # List wallets
+arc wallet generate       # Generate local EOA keypair and save to .env
+arc wallet list           # List Circle wallets
 arc wallet balance [addr] # Check USDC/EURC/USYC balance
 arc wallet fund [addr]    # Request testnet tokens from faucet
 ```
@@ -110,38 +119,37 @@ arc wallet fund [addr]    # Request testnet tokens from faucet
 ### Send & Transfer
 
 ```bash
-# Send tokens (uses private key from config/.env)
-arc send <amount> <recipient>              # Send USDC
-arc send <amount> <recipient> --token eurc # Send EURC
+# Send tokens (uses private key from .env)
+arc send <amount> [to]                    # Send USDC (prompts for address if omitted)
+arc send <amount> <to> --token eurc       # Send EURC
+arc send <amount> <to> --token 0xToken... # Send custom ERC-20
 
-# Batch send from file (amount per recipient)
-arc multisend <file> <amount>
-arc multisend wallets.txt 100 --token eurc
+# Batch send from text file (one address per line)
+arc multisend wallets.txt 100
+arc multisend wallets.txt 50 --token eurc
 
-# Transfer via Circle wallets
+# Transfer via Circle developer-controlled wallets
 arc transfer usdc -f <from> -t <to> -a <amount>
 arc transfer eurc -f <from> -t <to> -a <amount>
-arc transfer status <tx-hash>
+arc transfer status <txId>
 ```
 
 ### Bridge (CCTP)
 
 ```bash
-# Bridge USDC to Arc from another chain
 arc bridge to-arc -c Ethereum_Sepolia -f <addr> -t <addr> -a <amount>
-
-# Bridge USDC from Arc to another chain
 arc bridge from-arc -c Base_Sepolia -f <addr> -t <addr> -a <amount>
+arc bridge status <txHash>
 ```
 
-Supported chains: Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, Avalanche Fuji, Optimism Sepolia, Polygon Amoy, Unichain Sepolia, and more.
+Supported chains: Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia, Avalanche Fuji, Optimism Sepolia, Polygon Amoy, Unichain Sepolia, Solana Devnet.
 
 ### Gateway
 
 ```bash
-arc gateway deposit -w <wallet-id> -a <amount>                                        # Deposit to unified balance
-arc gateway transfer -w <wallet-id> -f <source> -t <dest> -c ETH-SEPOLIA -a <amount>  # Transfer via gateway
-arc gateway balance -w <wallet-id>                                                     # Check gateway balance
+arc gateway deposit -w <wallet-id> -a <amount>                                        # Deposit
+arc gateway transfer -w <wallet-id> -f <source> -t <dest> -c ETH-SEPOLIA -a <amount>  # Transfer
+arc gateway balance <walletId>                                                         # Balance
 ```
 
 ### Smart Contracts
@@ -150,6 +158,7 @@ arc gateway balance -w <wallet-id>                                              
 # Deploy tokens, NFTs, DEX
 arc deploy token MyToken MTK 1000000
 arc deploy nft MyNFT MNFT 100 --image ./logo.png
+arc deploy nft MyNFT MNFT 100 --image ./art.png --ipfs --mint 10
 arc deploy dex
 arc deploy list                         # List all deployments
 arc deploy verify <address>             # Verify on Blockscout
@@ -161,8 +170,13 @@ arc deploy token MyToken MTK 1000000 --sol ./MyToken.sol
 arc contract deploy --template erc20 --name "MyToken" --symbol "MTK" -w <wallet-id>
 
 # Interact with contracts (read/write)
-arc contract interact -a <contract-addr> -f "balanceOf(address)" --args <addr>
-arc contract interact -a <contract-addr> -f "transfer(address,uint256)" --args <addr> 100 --write
+arc contract interact -a <addr> -f "balanceOf(address)" --args 0x...
+arc contract interact -a <addr> -f "transfer(address,uint256)" --args 0x... 100 --write
+
+# Import, verify, monitor events
+arc contract import -a <addr> -n "My Contract"
+arc contract events monitor -a <addr> -e "Transfer(address,address,uint256)"
+arc contract events logs -a <addr>
 ```
 
 ### On-Chain Messages
@@ -170,6 +184,7 @@ arc contract interact -a <contract-addr> -f "transfer(address,uint256)" --args <
 ```bash
 arc message write "Hello Arc!"                  # Write message to self
 arc message write "GM" -t <recipient-address>   # Write message to someone
+arc message read <txHash>                       # Read message from tx
 ```
 
 ### DEX
@@ -177,10 +192,10 @@ arc message write "GM" -t <recipient-address>   # Write message to someone
 ```bash
 arc dex create-pool <token-addr> --dex <dex-addr>              # Create USDC/Token pool
 arc dex add-liquidity <token> <usdc-amt> <token-amt> --dex ... # Add liquidity
-arc dex remove-liquidity <token> --dex <dex-addr>              # Remove liquidity
-arc dex swap <amount> usdc <token-addr> --dex <dex-addr>       # Swap USDC -> Token
-arc dex swap <amount> <token-addr> usdc --dex <dex-addr>       # Swap Token -> USDC
-arc dex quote <amount> usdc <token-addr> --dex <dex-addr>      # Get quote
+arc dex remove-liquidity <token> --all --dex <dex-addr>        # Remove liquidity
+arc dex swap 10 usdc <token-addr> --dex <dex-addr>             # Swap USDC -> Token
+arc dex swap 5000 <token-addr> usdc --dex <dex-addr>           # Swap Token -> USDC
+arc dex quote 10 usdc <token-addr> --dex <dex-addr>            # Get quote
 arc dex pools --dex <dex-addr>                                 # List pools
 ```
 
@@ -189,27 +204,23 @@ arc dex pools --dex <dex-addr>                                 # List pools
 x402 is an HTTP 402 payment protocol that enables AI agents to pay for API access with USDC.
 
 ```bash
-# Start a payment-gated server
 arc x402 server --port 3000 --price 0.01 --pay-to <your-address>
 arc x402 server --routes routes.json    # Custom route pricing
-
-# Test an x402 endpoint
-arc x402 test <url>
-
-# Pay for an x402 resource
-arc x402 pay <url>
+arc x402 test <url>                     # Test an x402 endpoint
+arc x402 pay <url>                      # Pay for an x402 resource
+arc x402 init --pay-to <your-address>   # Init x402 templates in project
 ```
 
 ### Transaction & Explorer
 
 ```bash
-# Transaction details
-arc tx status <hash>
+arc tx status <hash>          # Transaction status and details
+arc tx decode <hash>          # Decode transaction input data
+arc tx receipt <hash>         # Full transaction receipt
 
-# Open in Arcscan explorer
-arc explore tx <hash>
-arc explore address <addr>
-arc explore contract <addr>
+arc explore tx <hash>         # Open transaction in Arcscan
+arc explore address <addr>    # Open address in Arcscan
+arc explore contract <addr>   # Open contract in Arcscan
 ```
 
 ### Info & Reference
@@ -280,6 +291,8 @@ npm run test:watch
 npm run build
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development conventions and guidelines.
+
 ## Testing
 
 The project has 434 tests (332 Vitest + 102 Foundry):
@@ -301,15 +314,18 @@ forge test
 - RPC chain definitions and gas formatting utilities
 - x402 server and client
 - Formatter and validator utilities
+- Solidity contract tests (SimpleToken, SimpleNFT, SimpleDEX) with fuzz testing
 
 ## CI/CD
 
 GitHub Actions runs on every push and PR:
 
-1. **TypeScript Check** - `tsc --noEmit`
-2. **Lint & Format** - ESLint + Prettier
+1. **Lint & Format** - ESLint + Prettier
+2. **TypeScript Check** - `tsc --noEmit`
 3. **Vitest** - All unit and integration tests
 4. **Foundry** - Smart contract tests
+
+A nightly build also runs to verify the full build pipeline.
 
 ## Project Structure
 
@@ -329,7 +345,8 @@ arcclitools/
 │   │   ├── x402-client.ts      # @x402/fetch wrapper
 │   │   ├── x402-server.ts      # @x402/express wrapper
 │   │   ├── foundry.ts          # Foundry CLI wrapper
-│   │   └── pinata.ts           # Pinata IPFS uploads
+│   │   ├── pinata.ts           # Pinata IPFS uploads
+│   │   └── deployments.ts      # Deployment tracking (deployments.json)
 │   ├── config/
 │   │   ├── constants.ts        # Network constants, contract addresses
 │   │   ├── store.ts            # Persistent config (~/.config/arc-cli)
@@ -338,10 +355,11 @@ arcclitools/
 │   │   ├── validator.ts        # Address, amount, URL validation
 │   │   ├── formatter.ts        # Output formatting
 │   │   ├── logger.ts           # Colored output + spinners
-│   │   └── prompts.ts          # Interactive prompts
-│   ├── contracts/              # Solidity contracts and ABIs
+│   │   ├── prompts.ts          # Interactive prompts
+│   │   └── tokens.ts           # Token alias resolution (usdc, eurc, usyc)
+│   ├── contracts/              # Solidity contracts and precompiled ABIs
 │   └── types/
-│       └── index.ts            # TypeScript interfaces
+│       └── index.ts            # Shared TypeScript interfaces
 ├── test/                       # 332 Vitest tests + 102 Foundry tests
 ├── templates/                  # x402 server templates
 └── arc-docs/                   # Arc Network documentation
