@@ -3,7 +3,7 @@ import { log } from "../utils/logger.js";
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { join, relative } from "path";
 
-const DOCS_URL = "https://developers.circle.com/arc";
+const DOCS_URL = "https://docs.arc.network/";
 
 function findDocsDir(): string | null {
   const candidates = [join(process.cwd(), "arc-docs"), join(process.cwd(), "..", "arc-docs")];
