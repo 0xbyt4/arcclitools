@@ -4,6 +4,8 @@ CLI tool for [Arc Network](https://arc.network) - Circle's EVM-compatible L1 blo
 
 Arc is a Layer-1 blockchain built by Circle where USDC serves as the native gas token (18 decimals on-chain, 6 decimals in ERC-20 interface). This CLI provides a unified interface for all Arc Network operations: wallet management, token transfers, cross-chain bridging, smart contract deployment, and x402 payment protocol.
 
+![Arc CLI Demo](https://github.com/0xbyt4/arcclitools/releases/download/v0.1.0/demo.gif)
+
 ## Features
 
 - **Wallet Management** - Create and manage wallets (local EOA + Circle developer-controlled)
