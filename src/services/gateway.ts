@@ -26,6 +26,7 @@ export async function depositToGateway(params: { walletId: string; amount: strin
 
 export async function transferViaGateway(params: {
   walletId: string;
+  sourceAddress: string;
   destinationAddress: string;
   destinationBlockchain: string;
   amount: string;
@@ -36,7 +37,7 @@ export async function transferViaGateway(params: {
     destinationAddress: params.destinationAddress,
     tokenAddress: ARC_TESTNET.contracts.USDC.address,
     blockchain: params.destinationBlockchain as "ARC-TESTNET" | "ETH-SEPOLIA" | "BASE-SEPOLIA",
-    walletAddress: params.destinationAddress,
+    walletAddress: params.sourceAddress,
     fee: {
       type: "level",
       config: { feeLevel: "MEDIUM" },

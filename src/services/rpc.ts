@@ -16,7 +16,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { getRpcUrl, requirePrivateKey } from "../config/env.js";
-import { ARC_TESTNET, NATIVE_USDC_DECIMALS } from "../config/constants.js";
+import { ARC_TESTNET, NATIVE_USDC_DECIMALS, ERC20_ABI } from "../config/constants.js";
 
 export const arcTestnet: Chain = defineChain({
   id: ARC_TESTNET.chainId,
@@ -141,42 +141,7 @@ export function getWalletClient(): WalletClient {
   });
 }
 
-const erc20Abi = [
-  {
-    type: "function" as const,
-    name: "transfer",
-    inputs: [
-      { name: "to", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [{ type: "bool" }],
-    stateMutability: "nonpayable" as const,
-  },
-  {
-    type: "function" as const,
-    name: "approve",
-    inputs: [
-      { name: "spender", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [{ type: "bool" }],
-    stateMutability: "nonpayable" as const,
-  },
-  {
-    type: "function" as const,
-    name: "decimals",
-    inputs: [],
-    outputs: [{ type: "uint8" }],
-    stateMutability: "view" as const,
-  },
-  {
-    type: "function" as const,
-    name: "symbol",
-    inputs: [],
-    outputs: [{ type: "string" }],
-    stateMutability: "view" as const,
-  },
-] as const;
+const erc20Abi = ERC20_ABI;
 
 export async function sendNativeUSDC(params: {
   to: `0x${string}`;
@@ -208,11 +173,11 @@ export async function sendERC20(params: {
 
   const decimals =
     params.decimals ??
-    (await client.readContract({
+    ((await client.readContract({
       address: params.tokenAddress,
       abi: erc20Abi,
       functionName: "decimals",
-    }));
+    })) as number);
 
   const value = parseUnits(params.amount, decimals);
 

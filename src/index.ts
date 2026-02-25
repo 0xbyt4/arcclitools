@@ -1,3 +1,4 @@
+import { createRequire } from "module";
 import { Command } from "commander";
 import { registerConfigCommand } from "./commands/config.js";
 import { registerNetworkCommand } from "./commands/network.js";
@@ -18,13 +19,16 @@ import { registerDeployCommand } from "./commands/deploy.js";
 import { registerMessageCommand } from "./commands/message.js";
 import { registerDexCommand } from "./commands/dex.js";
 
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json") as { version: string };
+
 export function createProgram(): Command {
   const program = new Command();
 
   program
     .name("arc")
     .description("CLI tool for Arc Network - Circle's EVM-compatible L1 with USDC as native gas")
-    .version("0.1.0");
+    .version(pkg.version);
 
   registerConfigCommand(program);
   registerNetworkCommand(program);

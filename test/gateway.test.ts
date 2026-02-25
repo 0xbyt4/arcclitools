@@ -94,6 +94,7 @@ describe("transferViaGateway", () => {
 
     const result = await transferViaGateway({
       walletId: "w-1",
+      sourceAddress: "0xsource",
       destinationAddress: "0xdest",
       destinationBlockchain: "ETH-SEPOLIA",
       amount: "75",
@@ -104,7 +105,7 @@ describe("transferViaGateway", () => {
       destinationAddress: "0xdest",
       tokenAddress: ARC_TESTNET.contracts.USDC.address,
       blockchain: "ETH-SEPOLIA",
-      walletAddress: "0xdest",
+      walletAddress: "0xsource",
       fee: { type: "level", config: { feeLevel: "MEDIUM" } },
     });
     expect(result).toEqual(txData);
@@ -115,6 +116,7 @@ describe("transferViaGateway", () => {
 
     await transferViaGateway({
       walletId: "w-1",
+      sourceAddress: "0xsource",
       destinationAddress: "0xdest",
       destinationBlockchain: "BASE-SEPOLIA",
       amount: "10",
@@ -129,6 +131,7 @@ describe("transferViaGateway", () => {
 
     await transferViaGateway({
       walletId: "w-1",
+      sourceAddress: "0xsource",
       destinationAddress: "0xdest",
       destinationBlockchain: "ETH-SEPOLIA",
       amount: "42",
@@ -143,6 +146,7 @@ describe("transferViaGateway", () => {
 
     await transferViaGateway({
       walletId: "w-1",
+      sourceAddress: "0xsource",
       destinationAddress: "0xdest",
       destinationBlockchain: "ARC-TESTNET",
       amount: "10",
@@ -158,6 +162,7 @@ describe("transferViaGateway", () => {
     await expect(
       transferViaGateway({
         walletId: "w-1",
+        sourceAddress: "0xsource",
         destinationAddress: "0xdest",
         destinationBlockchain: "ETH-SEPOLIA",
         amount: "100",

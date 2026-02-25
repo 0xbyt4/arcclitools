@@ -372,6 +372,24 @@ describe("CLI commands - gateway validation", () => {
     const { exitCode } = await runCLI(
       "gateway",
       "transfer",
+      "-f",
+      "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+      "-t",
+      "0x1234567890123456789012345678901234567890",
+      "-c",
+      "ETH-SEPOLIA",
+      "-a",
+      "50"
+    );
+    expect(exitCode).toBe(1);
+  });
+
+  it("gateway transfer without --from sets exitCode", async () => {
+    const { exitCode } = await runCLI(
+      "gateway",
+      "transfer",
+      "-w",
+      "wallet-123",
       "-t",
       "0x1234567890123456789012345678901234567890",
       "-c",
@@ -388,6 +406,8 @@ describe("CLI commands - gateway validation", () => {
       "transfer",
       "-w",
       "wallet-123",
+      "-f",
+      "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
       "-c",
       "ETH-SEPOLIA",
       "-a",
@@ -402,6 +422,8 @@ describe("CLI commands - gateway validation", () => {
       "transfer",
       "-w",
       "wallet-123",
+      "-f",
+      "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
       "-t",
       "0x1234567890123456789012345678901234567890",
       "-a",
@@ -416,6 +438,8 @@ describe("CLI commands - gateway validation", () => {
       "transfer",
       "-w",
       "wallet-123",
+      "-f",
+      "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
       "-t",
       "0x1234567890123456789012345678901234567890",
       "-c",

@@ -77,6 +77,7 @@ Example:
   gw.command("transfer")
     .description("Transfer USDC via Gateway to another chain")
     .option("-w, --wallet-id <id>", "Circle wallet ID")
+    .option("-f, --from <address>", "Source wallet address on Arc")
     .option("-t, --to <address>", "Destination address")
     .option("-c, --chain <blockchain>", "Destination blockchain (e.g., ETH-SEPOLIA, BASE-SEPOLIA)")
     .option("-a, --amount <amount>", "Amount to transfer")
@@ -84,68 +85,83 @@ Example:
       "after",
       `
 Example:
-  $ arc gateway transfer -w wallet123 -t 0xDest... -c ETH-SEPOLIA -a 50
+  $ arc gateway transfer -w wallet123 -f 0xSource... -t 0xDest... -c ETH-SEPOLIA -a 50
 `
     )
-    .action(async (opts: { walletId?: string; to?: string; chain?: string; amount?: string }) => {
-      if (!opts.walletId) {
-        log.error("Wallet ID required. Use -w <wallet-id>");
-        process.exitCode = 1;
-        return;
-      }
-      if (!opts.to) {
-        log.error("Destination address required. Use -t <address>");
-        process.exitCode = 1;
-        return;
-      }
-      if (!opts.chain) {
-        log.error("Destination chain required. Use -c <blockchain>");
-        process.exitCode = 1;
-        return;
-      }
-      if (!opts.amount || !validateAmount(opts.amount)) {
-        log.error("Invalid or missing amount. Use -a <amount>");
-        process.exitCode = 1;
-        return;
-      }
-
-      log.title("Gateway Transfer");
-      log.label("Wallet", opts.walletId);
-      log.label("To", opts.to);
-      log.label("Chain", opts.chain);
-      log.label("Amount", `${opts.amount} USDC`);
-      log.newline();
-
-      const s = spinner("Transferring via Gateway...");
-      try {
-        const result = await gateway.transferViaGateway({
-          walletId: opts.walletId,
-          destinationAddress: opts.to,
-          destinationBlockchain: opts.chain,
-          amount: opts.amount,
-        });
-        s.succeed("Gateway transfer initiated");
-
-        if (result) {
-          const data = result as unknown as Record<string, unknown>;
-          log.newline();
-          table(
-            ["Field", "Value"],
-            [
-              ["Transaction ID", String(data.id || "")],
-              ["State", String(data.state || "")],
-              ["To", opts.to],
-              ["Chain", opts.chain],
-              ["Amount", `${opts.amount} USDC`],
-            ]
-          );
+    .action(
+      async (opts: {
+        walletId?: string;
+        from?: string;
+        to?: string;
+        chain?: string;
+        amount?: string;
+      }) => {
+        if (!opts.walletId) {
+          log.error("Wallet ID required. Use -w <wallet-id>");
+          process.exitCode = 1;
+          return;
         }
-      } catch (err) {
-        s.fail("Transfer failed");
-        log.error((err as Error).message);
-        process.exitCode = 1;
+        if (!opts.from) {
+          log.error("Source wallet address required. Use -f <address>");
+          process.exitCode = 1;
+          return;
+        }
+        if (!opts.to) {
+          log.error("Destination address required. Use -t <address>");
+          process.exitCode = 1;
+          return;
+        }
+        if (!opts.chain) {
+          log.error("Destination chain required. Use -c <blockchain>");
+          process.exitCode = 1;
+          return;
+        }
+        if (!opts.amount || !validateAmount(opts.amount)) {
+          log.error("Invalid or missing amount. Use -a <amount>");
+          process.exitCode = 1;
+          return;
+        }
+
+        log.title("Gateway Transfer");
+        log.label("Wallet", opts.walletId);
+        log.label("From", opts.from);
+        log.label("To", opts.to);
+        log.label("Chain", opts.chain);
+        log.label("Amount", `${opts.amount} USDC`);
+        log.newline();
+
+        const s = spinner("Transferring via Gateway...");
+        try {
+          const result = await gateway.transferViaGateway({
+            walletId: opts.walletId,
+            sourceAddress: opts.from,
+            destinationAddress: opts.to,
+            destinationBlockchain: opts.chain,
+            amount: opts.amount,
+          });
+          s.succeed("Gateway transfer initiated");
+
+          if (result) {
+            const data = result as unknown as Record<string, unknown>;
+            log.newline();
+            table(
+              ["Field", "Value"],
+              [
+                ["Transaction ID", String(data.id || "")],
+                ["State", String(data.state || "")],
+                ["To", opts.to],
+                ["Chain", opts.chain],
+                ["Amount", `${opts.amount} USDC`],
+              ]
+            );
+          }
+        } catch (err) {
+          s.fail("Transfer failed");
+          log.error((err as Error).message);
+          process.exitCode = 1;
+        }
       }
-    });
+    );
 
   gw.command("balance")
     .description("Check Gateway unified balance")
