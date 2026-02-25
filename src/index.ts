@@ -1,4 +1,6 @@
-import { createRequire } from "module";
+import { readFileSync } from "fs";
+import { dirname, resolve } from "path";
+import { fileURLToPath } from "url";
 import { Command } from "commander";
 import { registerConfigCommand } from "./commands/config.js";
 import { registerNetworkCommand } from "./commands/network.js";
@@ -19,8 +21,19 @@ import { registerDeployCommand } from "./commands/deploy.js";
 import { registerMessageCommand } from "./commands/message.js";
 import { registerDexCommand } from "./commands/dex.js";
 
-const require = createRequire(import.meta.url);
-const pkg = require("../package.json") as { version: string };
+function findPackageJson(): string {
+  let dir = dirname(fileURLToPath(import.meta.url));
+  while (dir !== dirname(dir)) {
+    const candidate = resolve(dir, "package.json");
+    try {
+      return readFileSync(candidate, "utf-8");
+    } catch {
+      dir = dirname(dir);
+    }
+  }
+  return '{"version":"0.0.0"}';
+}
+const pkg = JSON.parse(findPackageJson()) as { version: string };
 
 export function createProgram(): Command {
   const program = new Command();
