@@ -22,6 +22,7 @@ import { registerMessageCommand } from "./commands/message.js";
 import { registerDexCommand } from "./commands/dex.js";
 import { registerUsycCommand } from "./commands/usyc.js";
 import { registerFxCommand } from "./commands/fx.js";
+import { registerPortfolioCommand } from "./commands/portfolio.js";
 
 function findPackageJson(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
@@ -65,6 +66,7 @@ export function createProgram(): Command {
   registerDexCommand(program);
   registerUsycCommand(program);
   registerFxCommand(program);
+  registerPortfolioCommand(program);
 
   return program;
 }

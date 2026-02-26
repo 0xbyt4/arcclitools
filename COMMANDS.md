@@ -1,6 +1,6 @@
 # arc-cli Command Reference
 
-Complete reference for all 72 commands across 20 command groups.
+Complete reference for all 73 commands across 21 command groups.
 
 ---
 
@@ -26,6 +26,7 @@ Complete reference for all 72 commands across 20 command groups.
 - [usyc](#usyc) - USYC yield-bearing token (Teller)
 - [fx](#fx) - StableFX escrow trades
 - [dex](#dex) - DEX swap and liquidity
+- [portfolio](#portfolio) - Full wallet portfolio overview
 
 ---
 
@@ -109,10 +110,10 @@ Wallet management - both local EOA and Circle developer-controlled wallets.
 
 Create a Circle developer-controlled wallet on Arc Testnet.
 
-| Option | Description |
-|--------|-------------|
-| `-n, --name <name>` | Wallet set name (default: "Arc CLI Wallet Set") |
-| `-c, --count <count>` | Number of wallets to create (default: 1) |
+| Option                | Description                                     |
+| --------------------- | ----------------------------------------------- |
+| `-n, --name <name>`   | Wallet set name (default: "Arc CLI Wallet Set") |
+| `-c, --count <count>` | Number of wallets to create (default: 1)        |
 
 ```bash
 arc wallet create
@@ -125,8 +126,8 @@ arc wallet create -n "My Wallets" -c 3
 
 Generate a local EOA keypair and save to `.env`.
 
-| Option | Description |
-|--------|-------------|
+| Option      | Description              |
+| ----------- | ------------------------ |
 | `--no-save` | Do not save to .env file |
 
 ```bash
@@ -157,11 +158,11 @@ arc wallet balance 0x1234...abcd
 
 Request testnet USDC/EURC via Circle Faucet API.
 
-| Option | Description |
-|--------|-------------|
-| `--usdc` | Request USDC tokens (default: true) |
-| `--eurc` | Request EURC tokens |
-| `--no-usdc` | Skip USDC tokens |
+| Option      | Description                                |
+| ----------- | ------------------------------------------ |
+| `--usdc`    | Request USDC tokens (default: true)        |
+| `--eurc`    | Request EURC tokens                        |
+| `--no-usdc` | Skip USDC tokens                           |
 | `--browser` | Open faucet in browser instead of API call |
 
 ```bash
@@ -178,13 +179,13 @@ Send USDC or ERC-20 tokens on Arc using private key from `.env`.
 
 ### `arc send <amount> [to]`
 
-| Argument | Description |
-|----------|-------------|
-| `<amount>` | Amount to send |
-| `[to]` | Recipient address (prompted if not provided) |
+| Argument   | Description                                  |
+| ---------- | -------------------------------------------- |
+| `<amount>` | Amount to send                               |
+| `[to]`     | Recipient address (prompted if not provided) |
 
-| Option | Description |
-|--------|-------------|
+| Option                | Description                                                       |
+| --------------------- | ----------------------------------------------------------------- |
 | `-t, --token <token>` | Token: `eurc`, `usyc`, or contract address (default: native USDC) |
 
 ```bash
@@ -203,13 +204,13 @@ Send tokens to multiple addresses from a file.
 
 ### `arc multisend <file> <amount>`
 
-| Argument | Description |
-|----------|-------------|
-| `<file>` | Text file with one wallet address per line (`#` for comments) |
-| `<amount>` | Amount to send to each address |
+| Argument   | Description                                                   |
+| ---------- | ------------------------------------------------------------- |
+| `<file>`   | Text file with one wallet address per line (`#` for comments) |
+| `<amount>` | Amount to send to each address                                |
 
-| Option | Description |
-|--------|-------------|
+| Option                | Description                                                       |
+| --------------------- | ----------------------------------------------------------------- |
 | `-t, --token <token>` | Token: `eurc`, `usyc`, or contract address (default: native USDC) |
 
 ```bash
@@ -219,6 +220,7 @@ arc multisend wallets.txt 50 --token 0xTokenAddress...
 ```
 
 Example `wallets.txt`:
+
 ```
 # My recipients
 0x1234...abcd
@@ -237,14 +239,14 @@ Deploy and manage contracts on Arc. Deployments are saved to `deployments.json`.
 
 Deploy an ERC-20 token.
 
-| Argument | Description |
-|----------|-------------|
-| `<name>` | Token name |
-| `<symbol>` | Token symbol |
+| Argument   | Description                                 |
+| ---------- | ------------------------------------------- |
+| `<name>`   | Token name                                  |
+| `<symbol>` | Token symbol                                |
 | `<supply>` | Initial supply (whole tokens, e.g. 1000000) |
 
-| Option | Description |
-|--------|-------------|
+| Option         | Description                                         |
+| -------------- | --------------------------------------------------- |
 | `--sol <path>` | Custom Solidity file instead of default SimpleToken |
 
 ```bash
@@ -256,19 +258,19 @@ arc deploy token MyToken MTK 1000000 --sol ./MyToken.sol
 
 Deploy an ERC-721 NFT collection with on-chain or IPFS metadata.
 
-| Argument | Description |
-|----------|-------------|
-| `<name>` | Collection name |
+| Argument   | Description       |
+| ---------- | ----------------- |
+| `<name>`   | Collection name   |
 | `<symbol>` | Collection symbol |
-| `<supply>` | Max supply |
+| `<supply>` | Max supply        |
 
-| Option | Description |
-|--------|-------------|
-| `--image <path>` | Image file (PNG, JPG, GIF, SVG, WebP) -- **required** |
-| `--ipfs` | Upload image to IPFS via Pinata (recommended for images > 24KB) |
-| `--description <text>` | Collection description |
-| `--mint <quantity>` | Mint tokens to deployer after deploy |
-| `--sol <path>` | Custom Solidity file instead of default SimpleNFT |
+| Option                 | Description                                                     |
+| ---------------------- | --------------------------------------------------------------- |
+| `--image <path>`       | Image file (PNG, JPG, GIF, SVG, WebP) -- **required**           |
+| `--ipfs`               | Upload image to IPFS via Pinata (recommended for images > 24KB) |
+| `--description <text>` | Collection description                                          |
+| `--mint <quantity>`    | Mint tokens to deployer after deploy                            |
+| `--sol <path>`         | Custom Solidity file instead of default SimpleNFT               |
 
 ```bash
 arc deploy nft MyNFT MNFT 100 --image ./logo.png
@@ -283,8 +285,8 @@ With `--ipfs`: image uploaded to IPFS via Pinata (any size, requires `PINATA_JWT
 
 Deploy a SimpleDEX (AMM) contract - constant product AMM with 0.3% swap fee.
 
-| Option | Description |
-|--------|-------------|
+| Option         | Description                                       |
+| -------------- | ------------------------------------------------- |
 | `--sol <path>` | Custom Solidity file instead of default SimpleDEX |
 
 ```bash
@@ -304,12 +306,12 @@ arc deploy list
 
 Verify a deployed contract on Blockscout.
 
-| Argument | Description |
-|----------|-------------|
+| Argument    | Description                |
+| ----------- | -------------------------- |
 | `<address>` | Contract address to verify |
 
-| Option | Description |
-|--------|-------------|
+| Option         | Description                                                           |
+| -------------- | --------------------------------------------------------------------- |
 | `--sol <path>` | Solidity source file (auto-detected from deployments.json if omitted) |
 
 ```bash
@@ -327,12 +329,12 @@ Write or read messages on the Arc blockchain.
 
 Write a message on-chain as transaction calldata.
 
-| Argument | Description |
-|----------|-------------|
+| Argument | Description      |
+| -------- | ---------------- |
 | `<text>` | Message to write |
 
-| Option | Description |
-|--------|-------------|
+| Option               | Description                       |
+| -------------------- | --------------------------------- |
 | `-t, --to <address>` | Recipient address (default: self) |
 
 ```bash
@@ -344,8 +346,8 @@ arc message write "GM" -t 0xRecipient...
 
 Read a message from a transaction's calldata.
 
-| Argument | Description |
-|----------|-------------|
+| Argument | Description      |
+| -------- | ---------------- |
 | `<hash>` | Transaction hash |
 
 ```bash
@@ -366,11 +368,11 @@ For simple transfers with a local private key, use `arc send` instead.
 
 Transfer USDC via Circle Wallets.
 
-| Option | Description |
-|--------|-------------|
-| `-f, --from <address>` | Sender wallet address |
-| `-t, --to <address>` | Recipient address |
-| `-a, --amount <amount>` | Amount to transfer |
+| Option                  | Description           |
+| ----------------------- | --------------------- |
+| `-f, --from <address>`  | Sender wallet address |
+| `-t, --to <address>`    | Recipient address     |
+| `-a, --amount <amount>` | Amount to transfer    |
 
 ```bash
 arc transfer usdc -f 0xSender... -t 0xRecipient... -a 100
@@ -380,11 +382,11 @@ arc transfer usdc -f 0xSender... -t 0xRecipient... -a 100
 
 Transfer EURC via Circle Wallets.
 
-| Option | Description |
-|--------|-------------|
-| `-f, --from <address>` | Sender wallet address |
-| `-t, --to <address>` | Recipient address |
-| `-a, --amount <amount>` | Amount to transfer |
+| Option                  | Description           |
+| ----------------------- | --------------------- |
+| `-f, --from <address>`  | Sender wallet address |
+| `-t, --to <address>`    | Recipient address     |
+| `-a, --amount <amount>` | Amount to transfer    |
 
 ```bash
 arc transfer eurc -f 0xSender... -t 0xRecipient... -a 50
@@ -394,8 +396,8 @@ arc transfer eurc -f 0xSender... -t 0xRecipient... -a 50
 
 Check transfer status by Circle transaction ID.
 
-| Argument | Description |
-|----------|-------------|
+| Argument | Description           |
+| -------- | --------------------- |
 | `<txId>` | Circle transaction ID |
 
 ```bash
@@ -416,12 +418,12 @@ Bridge USDC to/from Arc via Circle's Cross-Chain Transfer Protocol (CCTP).
 
 Bridge USDC from another chain to Arc Testnet.
 
-| Option | Description |
-|--------|-------------|
-| `-c, --chain <chain>` | Source chain (e.g. `Ethereum_Sepolia`, `Base_Sepolia`) |
-| `-f, --from <address>` | Source wallet address |
-| `-t, --to <address>` | Destination address on Arc |
-| `-a, --amount <amount>` | Amount of USDC to bridge |
+| Option                  | Description                                            |
+| ----------------------- | ------------------------------------------------------ |
+| `-c, --chain <chain>`   | Source chain (e.g. `Ethereum_Sepolia`, `Base_Sepolia`) |
+| `-f, --from <address>`  | Source wallet address                                  |
+| `-t, --to <address>`    | Destination address on Arc                             |
+| `-a, --amount <amount>` | Amount of USDC to bridge                               |
 
 ```bash
 arc bridge to-arc -c Ethereum_Sepolia -f 0xSrc... -t 0xDst... -a 10
@@ -432,12 +434,12 @@ arc bridge to-arc -c Base_Sepolia -f 0xSrc... -t 0xDst... -a 100
 
 Bridge USDC from Arc to another chain.
 
-| Option | Description |
-|--------|-------------|
-| `-c, --chain <chain>` | Destination chain |
-| `-f, --from <address>` | Source wallet address on Arc |
-| `-t, --to <address>` | Destination address |
-| `-a, --amount <amount>` | Amount of USDC to bridge |
+| Option                  | Description                  |
+| ----------------------- | ---------------------------- |
+| `-c, --chain <chain>`   | Destination chain            |
+| `-f, --from <address>`  | Source wallet address on Arc |
+| `-t, --to <address>`    | Destination address          |
+| `-a, --amount <amount>` | Amount of USDC to bridge     |
 
 ```bash
 arc bridge from-arc -c Ethereum_Sepolia -f 0xSrc... -t 0xDst... -a 10
@@ -448,8 +450,8 @@ arc bridge from-arc -c Base_Sepolia -f 0xSrc... -t 0xDst... -a 50
 
 Check bridge transaction status. Opens transaction in explorer.
 
-| Argument | Description |
-|----------|-------------|
+| Argument   | Description      |
+| ---------- | ---------------- |
 | `<txHash>` | Transaction hash |
 
 ```bash
@@ -468,9 +470,9 @@ Circle Gateway - unified crosschain USDC balance.
 
 Deposit USDC into Gateway unified balance.
 
-| Option | Description |
-|--------|-------------|
-| `-w, --wallet-id <id>` | Circle wallet ID |
+| Option                  | Description       |
+| ----------------------- | ----------------- |
+| `-w, --wallet-id <id>`  | Circle wallet ID  |
 | `-a, --amount <amount>` | Amount to deposit |
 
 ```bash
@@ -481,13 +483,13 @@ arc gateway deposit -w wallet123 -a 100
 
 Transfer USDC via Gateway to another chain.
 
-| Option | Description |
-|--------|-------------|
-| `-w, --wallet-id <id>` | Circle wallet ID |
-| `-f, --from <address>` | Source wallet address on Arc |
-| `-t, --to <address>` | Destination address |
+| Option                     | Description                                                 |
+| -------------------------- | ----------------------------------------------------------- |
+| `-w, --wallet-id <id>`     | Circle wallet ID                                            |
+| `-f, --from <address>`     | Source wallet address on Arc                                |
+| `-t, --to <address>`       | Destination address                                         |
 | `-c, --chain <blockchain>` | Destination blockchain (e.g. `ETH-SEPOLIA`, `BASE-SEPOLIA`) |
-| `-a, --amount <amount>` | Amount to transfer |
+| `-a, --amount <amount>`    | Amount to transfer                                          |
 
 ```bash
 arc gateway transfer -w wallet123 -f 0xSource... -t 0xDest... -c ETH-SEPOLIA -a 50
@@ -497,8 +499,8 @@ arc gateway transfer -w wallet123 -f 0xSource... -t 0xDest... -c ETH-SEPOLIA -a 
 
 Check Gateway unified balance.
 
-| Argument | Description |
-|----------|-------------|
+| Argument     | Description      |
+| ------------ | ---------------- |
 | `<walletId>` | Circle wallet ID |
 
 ```bash
@@ -515,15 +517,15 @@ Smart contract deployment and interaction.
 
 Deploy a smart contract on Arc Testnet via Foundry or Circle templates.
 
-| Option | Description |
-|--------|-------------|
-| `--foundry` | Deploy using Foundry (`forge create`) |
-| `--template <type>` | Deploy Circle template: `erc20`, `erc721`, `erc1155`, `airdrop` |
-| `-c, --contract <path>` | Contract path (for Foundry: `src/Contract.sol:Contract`) |
-| `-w, --wallet-id <id>` | Circle wallet ID (for template deploy) |
-| `-n, --name <name>` | Contract/token name |
-| `-s, --symbol <symbol>` | Token symbol |
-| `--args <args...>` | Constructor arguments (for Foundry) |
+| Option                  | Description                                                     |
+| ----------------------- | --------------------------------------------------------------- |
+| `--foundry`             | Deploy using Foundry (`forge create`)                           |
+| `--template <type>`     | Deploy Circle template: `erc20`, `erc721`, `erc1155`, `airdrop` |
+| `-c, --contract <path>` | Contract path (for Foundry: `src/Contract.sol:Contract`)        |
+| `-w, --wallet-id <id>`  | Circle wallet ID (for template deploy)                          |
+| `-n, --name <name>`     | Contract/token name                                             |
+| `-s, --symbol <symbol>` | Token symbol                                                    |
+| `--args <args...>`      | Constructor arguments (for Foundry)                             |
 
 ```bash
 # Foundry deploy
@@ -537,12 +539,12 @@ arc contract deploy --template erc20 -n "MyToken" -s "MTK" -w wallet123
 
 Call a contract function (read or write).
 
-| Option | Description |
-|--------|-------------|
-| `-a, --address <address>` | Contract address |
-| `-f, --function <sig>` | Function signature (e.g. `balanceOf(address)`) |
-| `--args <args...>` | Function arguments |
-| `--write` | Send a transaction (write operation, requires `PRIVATE_KEY`) |
+| Option                    | Description                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| `-a, --address <address>` | Contract address                                             |
+| `-f, --function <sig>`    | Function signature (e.g. `balanceOf(address)`)               |
+| `--args <args...>`        | Function arguments                                           |
+| `--write`                 | Send a transaction (write operation, requires `PRIVATE_KEY`) |
 
 ```bash
 # Read call
@@ -556,11 +558,11 @@ arc contract interact -a 0xContract... -f "transfer(address,uint256)" --args 0xT
 
 Verify a contract on Blockscout.
 
-| Option | Description |
-|--------|-------------|
-| `-a, --address <address>` | Contract address |
-| `-c, --contract <path>` | Contract source path |
-| `--args <args...>` | Constructor arguments |
+| Option                    | Description           |
+| ------------------------- | --------------------- |
+| `-a, --address <address>` | Contract address      |
+| `-c, --contract <path>`   | Contract source path  |
+| `--args <args...>`        | Constructor arguments |
 
 ```bash
 arc contract verify -a 0xContract... -c src/MyContract.sol:MyContract
@@ -570,10 +572,10 @@ arc contract verify -a 0xContract... -c src/MyContract.sol:MyContract
 
 Import an existing contract to Circle platform.
 
-| Option | Description |
-|--------|-------------|
+| Option                    | Description      |
+| ------------------------- | ---------------- |
 | `-a, --address <address>` | Contract address |
-| `-n, --name <name>` | Contract name |
+| `-n, --name <name>`       | Contract name    |
 
 ```bash
 arc contract import -a 0xContract... -n "My Contract"
@@ -583,9 +585,9 @@ arc contract import -a 0xContract... -n "My Contract"
 
 Create an event monitor (webhook).
 
-| Option | Description |
-|--------|-------------|
-| `-a, --address <address>` | Contract address |
+| Option                    | Description                                                |
+| ------------------------- | ---------------------------------------------------------- |
+| `-a, --address <address>` | Contract address                                           |
 | `-e, --event <signature>` | Event signature (e.g. `Transfer(address,address,uint256)`) |
 
 ```bash
@@ -596,10 +598,10 @@ arc contract events monitor -a 0xContract... -e "Transfer(address,address,uint25
 
 Query event logs for a contract.
 
-| Option | Description |
-|--------|-------------|
-| `-a, --address <address>` | Contract address |
-| `-l, --limit <number>` | Number of logs to fetch (default: 20) |
+| Option                    | Description                           |
+| ------------------------- | ------------------------------------- |
+| `-a, --address <address>` | Contract address                      |
+| `-l, --limit <number>`    | Number of logs to fetch (default: 20) |
 
 ```bash
 arc contract events logs -a 0xContract...
@@ -646,12 +648,12 @@ x402 HTTP 402 payment protocol - enables AI agents to pay for API access with US
 
 Start an x402 payment-gated server.
 
-| Option | Description |
-|--------|-------------|
-| `-p, --port <port>` | Server port |
-| `--price <amount>` | Default price per request (USDC) |
-| `--pay-to <address>` | Payment recipient address |
-| `--routes <file>` | Route configuration file (JSON) |
+| Option                    | Description                               |
+| ------------------------- | ----------------------------------------- |
+| `-p, --port <port>`       | Server port                               |
+| `--price <amount>`        | Default price per request (USDC)          |
+| `--pay-to <address>`      | Payment recipient address                 |
+| `--routes <file>`         | Route configuration file (JSON)           |
 | `-n, --network <network>` | Payment network (default: `base-sepolia`) |
 
 ```bash
@@ -663,9 +665,9 @@ arc x402 server --routes routes.json
 
 Make a payment to an x402 endpoint.
 
-| Argument | Description |
-|----------|-------------|
-| `<url>` | URL to pay for |
+| Argument | Description    |
+| -------- | -------------- |
+| `<url>`  | URL to pay for |
 
 ```bash
 arc x402 pay https://api.example.com/data
@@ -676,8 +678,8 @@ arc x402 pay https://api.example.com/data
 Test an x402 endpoint (check if it requires payment).
 
 | Argument | Description |
-|----------|-------------|
-| `<url>` | URL to test |
+| -------- | ----------- |
+| `<url>`  | URL to test |
 
 ```bash
 arc x402 test https://api.example.com/data
@@ -687,9 +689,9 @@ arc x402 test https://api.example.com/data
 
 Initialize x402 config and templates in current directory.
 
-| Option | Description |
-|--------|-------------|
-| `--pay-to <address>` | Payment recipient address |
+| Option                    | Description                               |
+| ------------------------- | ----------------------------------------- |
+| `--pay-to <address>`      | Payment recipient address                 |
 | `-n, --network <network>` | Payment network (default: `base-sepolia`) |
 
 ```bash
@@ -736,8 +738,8 @@ Known contract addresses on Arc Testnet.
 
 List all known contract addresses.
 
-| Option | Description |
-|--------|-------------|
+| Option                 | Description                                                    |
+| ---------------------- | -------------------------------------------------------------- |
 | `-c, --category <cat>` | Filter: `stablecoins`, `cctp`, `gateway`, `payments`, `common` |
 
 ```bash
@@ -764,8 +766,8 @@ arc info evm
 
 List node providers, data indexers, and account abstraction providers.
 
-| Option | Description |
-|--------|-------------|
+| Option                 | Description                                               |
+| ---------------------- | --------------------------------------------------------- |
 | `-c, --category <cat>` | Filter: `node`, `indexer`, `aa`, `compliance`, `explorer` |
 
 ```bash
@@ -800,12 +802,12 @@ arc docs open
 
 Search local `arc-docs/` directory for a keyword.
 
-| Argument | Description |
-|----------|-------------|
+| Argument  | Description    |
+| --------- | -------------- |
 | `<query>` | Search keyword |
 
-| Option | Description |
-|--------|-------------|
+| Option                 | Description                           |
+| ---------------------- | ------------------------------------- |
 | `-l, --limit <number>` | Maximum results to show (default: 20) |
 
 ```bash
@@ -848,9 +850,9 @@ arc usyc balance 0x1234...abcd
 
 Preview a deposit, mint, redeem, or withdraw operation without executing.
 
-| Argument | Description |
-|----------|-------------|
-| `<action>` | Action: `deposit`, `mint`, `redeem`, `withdraw` |
+| Argument   | Description                                              |
+| ---------- | -------------------------------------------------------- |
+| `<action>` | Action: `deposit`, `mint`, `redeem`, `withdraw`          |
 | `<amount>` | Amount (USDC for deposit/withdraw, USYC for mint/redeem) |
 
 ```bash
@@ -862,8 +864,8 @@ arc usyc preview redeem 500
 
 Deposit USDC to receive USYC shares. Handles ERC-20 approval automatically.
 
-| Argument | Description |
-|----------|-------------|
+| Argument   | Description               |
+| ---------- | ------------------------- |
 | `<amount>` | Amount of USDC to deposit |
 
 ```bash
@@ -876,8 +878,8 @@ arc usyc deposit 1000
 
 Redeem USYC shares for USDC.
 
-| Argument | Description |
-|----------|-------------|
+| Argument   | Description              |
+| ---------- | ------------------------ |
 | `<shares>` | Amount of USYC to redeem |
 
 ```bash
@@ -890,8 +892,8 @@ arc usyc redeem 500
 
 Withdraw an exact USDC amount by burning the required USYC shares.
 
-| Argument | Description |
-|----------|-------------|
+| Argument   | Description                   |
+| ---------- | ----------------------------- |
 | `<amount>` | Exact USDC amount to withdraw |
 
 ```bash
@@ -904,8 +906,8 @@ arc usyc withdraw 100
 
 Check if an address is entitled to interact with the USYC Teller (deposit, redeem, transfer permissions and role bitmap).
 
-| Argument | Description |
-|----------|-------------|
+| Argument    | Description      |
+| ----------- | ---------------- |
 | `<address>` | Address to check |
 
 ```bash
@@ -930,9 +932,9 @@ arc fx info
 
 Show full details for a specific trade (pair, amounts, FX rate, maker/taker, fees, status, funding, expiry).
 
-| Argument | Description |
-|----------|-------------|
-| `<id>` | Trade ID (positive integer) |
+| Argument | Description                 |
+| -------- | --------------------------- |
+| `<id>`   | Trade ID (positive integer) |
 
 ```bash
 arc fx trade 1
@@ -943,8 +945,8 @@ arc fx trade 133
 
 List recent trades in a table.
 
-| Option | Description |
-|--------|-------------|
+| Option                | Description                                   |
+| --------------------- | --------------------------------------------- |
 | `-n, --count <count>` | Number of recent trades to show (default: 10) |
 
 ```bash
@@ -956,9 +958,9 @@ arc fx trades -n 20
 
 Declare an FX trade as breached (counterparty failed to deliver). Validates trade is Active and expired before submitting.
 
-| Argument | Description |
-|----------|-------------|
-| `<id>` | Trade ID to breach |
+| Argument | Description        |
+| -------- | ------------------ |
+| `<id>`   | Trade ID to breach |
 
 ```bash
 arc fx breach 42
@@ -970,8 +972,8 @@ arc fx breach 42
 
 Check maker base, taker quote, and maker net balances for one or more trade IDs.
 
-| Argument | Description |
-|----------|-------------|
+| Argument   | Description           |
+| ---------- | --------------------- |
 | `<ids...>` | One or more trade IDs |
 
 ```bash
@@ -983,8 +985,8 @@ arc fx balances 100
 
 Check if an address is an authorized FxEscrow relayer.
 
-| Argument | Description |
-|----------|-------------|
+| Argument    | Description      |
+| ----------- | ---------------- |
 | `<address>` | Address to check |
 
 ```bash
@@ -1001,12 +1003,12 @@ Interact with SimpleDEX (AMM) - constant product AMM with 0.3% swap fee. All poo
 
 Create a new USDC/Token liquidity pool.
 
-| Argument | Description |
-|----------|-------------|
+| Argument  | Description          |
+| --------- | -------------------- |
 | `<token>` | ERC-20 token address |
 
-| Option | Description |
-|--------|-------------|
+| Option            | Description                                                |
+| ----------------- | ---------------------------------------------------------- |
 | `--dex <address>` | DEX contract address (auto-detected from deployments.json) |
 
 ```bash
@@ -1018,14 +1020,14 @@ arc dex create-pool 0xTokenAddress... --dex 0xDEXAddress...
 
 Add liquidity to a USDC/Token pool. Token approval is handled automatically.
 
-| Argument | Description |
-|----------|-------------|
-| `<token>` | ERC-20 token address |
-| `<usdc-amount>` | Amount of USDC to add |
+| Argument         | Description             |
+| ---------------- | ----------------------- |
+| `<token>`        | ERC-20 token address    |
+| `<usdc-amount>`  | Amount of USDC to add   |
 | `<token-amount>` | Amount of tokens to add |
 
-| Option | Description |
-|--------|-------------|
+| Option            | Description          |
+| ----------------- | -------------------- |
 | `--dex <address>` | DEX contract address |
 
 ```bash
@@ -1037,15 +1039,15 @@ arc dex add-liquidity 0xToken... 10 1000 --dex 0xDEX...
 
 Remove liquidity from a USDC/Token pool.
 
-| Argument | Description |
-|----------|-------------|
+| Argument  | Description          |
+| --------- | -------------------- |
 | `<token>` | ERC-20 token address |
 
-| Option | Description |
-|--------|-------------|
-| `--amount <lp>` | LP token amount to remove (raw) |
-| `--all` | Remove all your liquidity |
-| `--dex <address>` | DEX contract address |
+| Option            | Description                     |
+| ----------------- | ------------------------------- |
+| `--amount <lp>`   | LP token amount to remove (raw) |
+| `--all`           | Remove all your liquidity       |
+| `--dex <address>` | DEX contract address            |
 
 ```bash
 arc dex remove-liquidity 0xToken... --all
@@ -1056,14 +1058,14 @@ arc dex remove-liquidity 0xToken... --amount 1000 --dex 0xDEX...
 
 Swap between USDC and an ERC-20 token.
 
-| Argument | Description |
-|----------|-------------|
-| `<amount>` | Amount to swap |
-| `<from>` | Source: `usdc` or token address |
-| `<to>` | Destination: `usdc` or token address |
+| Argument   | Description                          |
+| ---------- | ------------------------------------ |
+| `<amount>` | Amount to swap                       |
+| `<from>`   | Source: `usdc` or token address      |
+| `<to>`     | Destination: `usdc` or token address |
 
-| Option | Description |
-|--------|-------------|
+| Option            | Description          |
+| ----------------- | -------------------- |
 | `--dex <address>` | DEX contract address |
 
 ```bash
@@ -1077,14 +1079,14 @@ Get a quote first: `arc dex quote 10 usdc 0xToken...`
 
 Get a swap quote without executing.
 
-| Argument | Description |
-|----------|-------------|
-| `<amount>` | Amount to swap |
-| `<from>` | Source: `usdc` or token address |
-| `<to>` | Destination: `usdc` or token address |
+| Argument   | Description                          |
+| ---------- | ------------------------------------ |
+| `<amount>` | Amount to swap                       |
+| `<from>`   | Source: `usdc` or token address      |
+| `<to>`     | Destination: `usdc` or token address |
 
-| Option | Description |
-|--------|-------------|
+| Option            | Description          |
+| ----------------- | -------------------- |
 | `--dex <address>` | DEX contract address |
 
 ```bash
@@ -1096,11 +1098,43 @@ arc dex quote 5000 0xToken... usdc
 
 List all liquidity pools with reserves and pricing.
 
-| Option | Description |
-|--------|-------------|
+| Option            | Description          |
+| ----------------- | -------------------- |
 | `--dex <address>` | DEX contract address |
 
 ```bash
 arc dex pools
 arc dex pools --dex 0xDEX...
 ```
+
+---
+
+## portfolio
+
+Full wallet portfolio overview powered by Arcscan API. Shows token balances, NFTs, and recent transactions with smart action labels.
+
+### `arc portfolio [address]`
+
+Display complete portfolio for an address.
+
+| Argument    | Description                                        |
+| ----------- | -------------------------------------------------- |
+| `[address]` | Wallet address (default: WALLET_ADDRESS from .env) |
+
+| Option                 | Description                                               |
+| ---------------------- | --------------------------------------------------------- |
+| `-n, --limit <number>` | Number of recent transactions to show (1-50, default: 10) |
+
+```bash
+arc portfolio                                              # Use address from .env
+arc portfolio 0x6508Abe0cFE0290B4b29EBD0F88102F8425d29bB   # Specific address
+arc portfolio 0x6508... -n 20                              # Show last 20 transactions
+```
+
+**Output includes:**
+
+- Native USDC balance
+- All ERC-20 token balances with amounts
+- NFT collections with counts
+- Recent transactions with smart labels (Send, Approve, Mint, Deploy, Swap, etc.)
+- Summary statistics

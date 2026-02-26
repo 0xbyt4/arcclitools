@@ -19,6 +19,7 @@ Arc is a Layer-1 blockchain built by Circle where USDC serves as the native gas 
 - **x402 Protocol** - HTTP 402 payment server and client for AI agent monetization
 - **USYC Teller** - Mint/redeem yield-bearing USYC tokens, check rates and entitlements
 - **StableFX** - Query and manage escrow-based FX trades (USDC/EURC swaps)
+- **Portfolio** - Full wallet overview: token balances, NFTs, recent transactions via Arcscan
 - **Block Explorer** - Open transactions, addresses, contracts in Arcscan
 - **Network Info** - Chain details, EVM differences, provider directory
 - **RPC Fallback** - Automatic failover across multiple RPC endpoints
@@ -246,6 +247,14 @@ arc explore address <addr>    # Open address in Arcscan
 arc explore contract <addr>   # Open contract in Arcscan
 ```
 
+### Portfolio
+
+```bash
+arc portfolio                       # Full overview (address from .env)
+arc portfolio <address>             # Portfolio for any address
+arc portfolio <address> -n 20       # Show last 20 transactions
+```
+
 ### Info & Reference
 
 ```bash
@@ -320,7 +329,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development conventions and guideline
 
 ## Testing
 
-The project has 471 tests (369 Vitest + 102 Foundry):
+The project has 476 tests (374 Vitest + 102 Foundry):
 
 ```bash
 # Run all Vitest tests
@@ -361,7 +370,7 @@ arcclitools/
 │   └── arc-cli.ts              # CLI executable entry point
 ├── src/
 │   ├── index.ts                # Commander setup, command registration
-│   ├── commands/               # CLI command definitions (20 commands)
+│   ├── commands/               # CLI command definitions (21 commands)
 │   ├── services/               # SDK wrappers and business logic
 │   │   ├── circle-wallets.ts   # Circle Developer-Controlled Wallets
 │   │   ├── circle-contracts.ts # Circle Smart Contract Platform
@@ -386,7 +395,7 @@ arcclitools/
 │   ├── contracts/              # Solidity contracts and precompiled ABIs
 │   └── types/
 │       └── index.ts            # Shared TypeScript interfaces
-├── test/                       # 369 Vitest tests + 102 Foundry tests
+├── test/                       # 374 Vitest tests + 102 Foundry tests
 ├── templates/                  # x402 server templates
 └── arc-docs/                   # Arc Network documentation
 ```
