@@ -18,5 +18,8 @@ out/
 coverage/
 
 # Demo
+demo.tape
 demo.gif
 demo.mp4
+demo-music.mp4
+bgm.mp3
